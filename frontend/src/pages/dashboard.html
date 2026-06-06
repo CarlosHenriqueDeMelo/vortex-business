@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Vortex Business</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar { background: #111113; border-bottom: 0.5px solid #1e1e22; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-text { font-size: 16px; font-weight: 500; color: #fff; }
+    .logo-text span { color: #534AB7; }
+    .company-badge { background: #1a1040; border: 0.5px solid #2e2860; border-radius: 8px; padding: 5px 12px; font-size: 12px; color: #7F77DD; display: flex; align-items: center; gap: 6px; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: #1a1040; border: 1px solid #2e2860; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #7F77DD; font-weight: 500; cursor: pointer; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .btn-sair { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #555; cursor: pointer; font-family: inherit; }
+    .btn-sair:hover { color: #E24B4A; border-color: #E24B4A; }
+    .layout { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 180px; background: #111113; border-right: 0.5px solid #1e1e22; padding: 16px 0; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; overflow-y: auto; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 18px; cursor: pointer; font-size: 13px; color: #555; border-left: 2px solid transparent; transition: all 0.12s; }
+    .nav-item:hover { background: #161618; color: #aaa; }
+    .nav-item.active { background: #13121f; color: #fff; border-left-color: #534AB7; }
+    .nav-item i { font-size: 17px; }
+    .nav-section { font-size: 10px; color: #333; letter-spacing: 1.5px; padding: 14px 18px 6px; text-transform: uppercase; }
+    .main { flex: 1; padding: 24px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 18px; font-weight: 500; color: #fff; margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: #444; margin-bottom: 22px; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .metric { background: #161618; border: 0.5px solid #1e1e22; border-radius: 8px; padding: 16px; }
+    .metric-label { font-size: 11px; color: #444; margin-bottom: 8px; }
+    .metric-value { font-size: 22px; font-weight: 500; color: #fff; }
+    .metric-value.green { color: #1D9E75; }
+    .metric-value.amber { color: #EF9F27; }
+    .metric-value.red { color: #E24B4A; }
+    .row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .section-title { font-size: 13px; color: #555; }
+    .table-wrap { background: #161618; border: 0.5px solid #1e1e22; border-radius: 8px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #111113; color: #444; font-weight: 400; padding: 10px 14px; text-align: left; border-bottom: 0.5px solid #1e1e22; }
+    td { padding: 10px 14px; color: #aaa; border-bottom: 0.5px solid #161618; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1a1a1e; }
+    .badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+    .badge.green { background: #0d2e1a; color: #1D9E75; }
+    .badge.amber { background: #2e1e00; color: #EF9F27; }
+    .badge.red { background: #2e0d0d; color: #E24B4A; }
+    .badge.blue { background: #0d1e2e; color: #378ADD; }
+    .badge.purple { background: #1a1040; color: #7F77DD; }
+    .btn-primary { background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: 12px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary:hover { background: #3C3489; }
+    .empty { text-align: center; padding: 40px; color: #333; font-size: 13px; }
+    .empty i { font-size: 36px; margin-bottom: 12px; display: block; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+      <path d="M14 3 L24 14 L14 25 L4 14 Z" fill="#534AB7"/>
+      <path d="M14 8 L20 14 L14 20 L8 14 Z" fill="#0d0d0f"/>
+      <path d="M14 11 L17 14 L14 17 L11 14 Z" fill="#7F77DD"/>
+    </svg>
+    <div class="logo-text">Vortex<span> Business</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="company-badge"><i class="ti ti-building-store" style="font-size:13px"></i> <span id="nomeEmpresa">—</span></div>
+    <div class="avatar" id="avatarEmpresa">—</div>
+    <button class="btn-sair" onclick="sair()"><i class="ti ti-logout"></i> Sair</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="goto('dashboard', this)"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    <div class="nav-section">Gestão</div>
+    <div class="nav-item" onclick="goto('estoque', this)"><i class="ti ti-box"></i> Estoque</div>
+    <div class="nav-item" onclick="goto('vendas', this)"><i class="ti ti-shopping-cart"></i> Vendas</div>
+    <div class="nav-item" onclick="goto('clientes', this)"><i class="ti ti-users"></i> Clientes</div>
+    <div class="nav-section">Financeiro</div>
+    <div class="nav-item" onclick="goto('financeiro', this)"><i class="ti ti-cash"></i> Financeiro</div>
+    <div class="nav-item" onclick="goto('fornecedores', this)"><i class="ti ti-truck"></i> Fornecedores</div>
+    <div class="nav-item" onclick="goto('relatorios', this)"><i class="ti ti-chart-bar"></i> Relatórios</div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title" id="saudacao">Olá!</div>
+      <div class="page-sub" id="dataHoje"></div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Vendas hoje</div><div class="metric-value green" id="vendasHoje">R$ 0,00</div></div>
+        <div class="metric"><div class="metric-label">Itens no estoque</div><div class="metric-value" id="totalItens">0</div></div>
+        <div class="metric"><div class="metric-label">Fiado em aberto</div><div class="metric-value amber" id="totalFiado">R$ 0,00</div></div>
+        <div class="metric"><div class="metric-label">Clientes</div><div class="metric-value" id="totalClientes">0</div></div>
+      </div>
+      <div class="section-title" style="margin-bottom:12px">Últimas vendas</div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Cliente</th><th>Valor</th><th>Pagamento</th><th>Data</th></tr>
+          <tbody id="ultimasVendas"><tr><td colspan="4" class="empty"><i class="ti ti-shopping-cart"></i>Nenhuma venda ainda</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ESTOQUE -->
+    <div class="page" id="page-estoque">
+      <div class="row-top">
+        <div><div class="page-title">Estoque</div><div class="page-sub">Gerencie seus produtos</div></div>
+        <button class="btn-primary"><i class="ti ti-plus"></i> Novo produto</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Preço venda</th><th>Status</th></tr>
+          <tbody id="listaEstoque"><tr><td colspan="5" class="empty"><i class="ti ti-box"></i>Nenhum produto cadastrado</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VENDAS -->
+    <div class="page" id="page-vendas">
+      <div class="row-top">
+        <div><div class="page-title">Vendas</div><div class="page-sub">Registre e acompanhe vendas</div></div>
+        <button class="btn-primary"><i class="ti ti-plus"></i> Nova venda</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Data</th><th>Cliente</th><th>Valor</th><th>Pagamento</th></tr>
+          <tbody id="listaVendas"><tr><td colspan="4" class="empty"><i class="ti ti-shopping-cart"></i>Nenhuma venda ainda</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="page" id="page-clientes">
+      <div class="row-top">
+        <div><div class="page-title">Clientes</div><div class="page-sub">Cadastro de clientes</div></div>
+        <button class="btn-primary"><i class="ti ti-plus"></i> Novo cliente</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>ID</th><th>Nome</th><th>Cidade</th><th>Telefone</th><th>Fiado</th></tr>
+          <tbody id="listaClientes"><tr><td colspan="5" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div class="page" id="page-financeiro">
+      <div class="row-top">
+        <div><div class="page-title">Financeiro</div><div class="page-sub">Contas a pagar e receber</div></div>
+        <button class="btn-primary"><i class="ti ti-plus"></i> Novo lançamento</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Tipo</th><th>Status</th></tr>
+          <tbody id="listaFinanceiro"><tr><td colspan="5" class="empty"><i class="ti ti-cash"></i>Nenhum lançamento ainda</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORNECEDORES -->
+    <div class="page" id="page-fornecedores">
+      <div class="row-top">
+        <div><div class="page-title">Fornecedores</div><div class="page-sub">Gerencie seus fornecedores</div></div>
+        <button class="btn-primary"><i class="ti ti-plus"></i> Novo fornecedor</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Nome</th><th>Categoria</th><th>Telefone</th><th>Status</th></tr>
+          <tbody id="listaFornecedores"><tr><td colspan="4" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div class="page" id="page-relatorios">
+      <div class="page-title">Relatórios</div>
+      <div class="page-sub">Gere relatórios em PDF</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px">
+        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#534AB7;margin-bottom:8px"><i class="ti ti-chart-bar"></i></div><div class="metric-label">Vendas por período</div><div style="font-size:11px;color:#534AB7;margin-top:8px">Gerar PDF →</div></div>
+        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#1D9E75;margin-bottom:8px"><i class="ti ti-box"></i></div><div class="metric-label">Posição de estoque</div><div style="font-size:11px;color:#1D9E75;margin-top:8px">Gerar PDF →</div></div>
+        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#EF9F27;margin-bottom:8px"><i class="ti ti-users"></i></div><div class="metric-label">Clientes com fiado</div><div style="font-size:11px;color:#EF9F27;margin-top:8px">Gerar PDF →</div></div>
+        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#378ADD;margin-bottom:8px"><i class="ti ti-cash"></i></div><div class="metric-label">Fluxo financeiro</div><div style="font-size:11px;color:#378ADD;margin-top:8px">Gerar PDF →</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:5000'
+  const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
+
+  // Preencher dados da empresa
+  document.getElementById('nomeEmpresa').textContent = empresa.nome || '—'
+  const iniciais = (empresa.nome || '??').split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase()
+  document.getElementById('avatarEmpresa').textContent = iniciais
+  document.getElementById('saudacao').textContent = `Olá, ${empresa.nome}! 👋`
+  const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  document.getElementById('dataHoje').textContent = hoje.charAt(0).toUpperCase() + hoje.slice(1)
+
+  function goto(page, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+    document.getElementById('page-' + page).classList.add('active')
+    el.classList.add('active')
+  }
+
+  function sair() {
+    localStorage.removeItem('empresa')
+    window.location.href = 'index.html'
+  }
+</script>
+</body>
+</html>
