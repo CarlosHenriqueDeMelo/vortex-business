@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Nova Empresa — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 420px; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; justify-content: center; }
+    .logo-text { font-size: 18px; font-weight: 500; color: #fff; }
+    .logo-text span { color: #534AB7; }
+    .title { font-size: 16px; font-weight: 500; color: #fff; margin-bottom: 4px; text-align: center; }
+    .subtitle { font-size: 13px; color: #444; margin-bottom: 24px; text-align: center; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .label { font-size: 12px; color: #555; }
+    .input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 10px 12px; width: 100%; outline: none; font-family: inherit; }
+    .input:focus { border-color: #534AB7; }
+    select.input { cursor: pointer; }
+    .btn-primary { width: 100%; background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-primary:hover { background: #3C3489; }
+    .btn-ghost { width: 100%; background: transparent; color: #555; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-ghost:hover { color: #aaa; border-color: #444; }
+    .err { font-size: 12px; color: #E24B4A; min-height: 16px; text-align: center; margin-top: 4px; }
+    .success { font-size: 12px; color: #1D9E75; min-height: 16px; text-align: center; margin-top: 4px; }
+    .divider { height: 0.5px; background: #1e1e22; margin: 20px 0; }
+    .pass-hint { font-size: 11px; color: #333; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+        <path d="M14 3 L24 14 L14 25 L4 14 Z" fill="#534AB7"/>
+        <path d="M14 8 L20 14 L14 20 L8 14 Z" fill="#0d0d0f"/>
+        <path d="M14 11 L17 14 L14 17 L11 14 Z" fill="#7F77DD"/>
+      </svg>
+      <div class="logo-text">Vortex<span> Business</span></div>
+    </div>
+
+    <div class="title">Cadastrar nova empresa</div>
+    <div class="subtitle">Preencha os dados para criar o perfil</div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <div class="label">Nome da empresa *</div>
+      <input class="input" type="text" id="nome" placeholder="Ex: Mercado Silva"/>
+    </div>
+
+    <div class="field">
+      <div class="label">Setor</div>
+      <select class="input" id="setor">
+        <option value="">Selecione o setor</option>
+        <option>Varejo</option>
+        <option>Atacado</option>
+        <option>Alimentação</option>
+        <option>Moda</option>
+        <option>Serviços</option>
+        <option>Tecnologia</option>
+        <option>Saúde</option>
+        <option>Outro</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="label">Senha (4 dígitos) *</div>
+      <input class="input" type="password" id="senha" placeholder="••••" maxlength="4"/>
+      <div class="pass-hint">A senha protege o acesso a esta empresa</div>
+    </div>
+
+    <div class="field">
+      <div class="label">Confirmar senha *</div>
+      <input class="input" type="password" id="senha2" placeholder="••••" maxlength="4"/>
+    </div>
+
+    <div class="err" id="errMsg"></div>
+    <div class="success" id="successMsg"></div>
+
+    <button class="btn-primary" onclick="cadastrar()">Criar empresa</button>
+    <button class="btn-ghost" onclick="voltar()"><i class="ti ti-arrow-left"></i> Voltar</button>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:5000'
+
+    async function cadastrar() {
+      const nome = document.getElementById('nome').value.trim()
+      const setor = document.getElementById('setor').value
+      const senha = document.getElementById('senha').value
+      const senha2 = document.getElementById('senha2').value
+
+      document.getElementById('errMsg').textContent = ''
+      document.getElementById('successMsg').textContent = ''
+
+      if (!nome) { document.getElementById('errMsg').textContent = 'Nome é obrigatório.'; return; }
+      if (senha.length < 4) { document.getElementById('errMsg').textContent = 'A senha deve ter 4 dígitos.'; return; }
+      if (senha !== senha2) { document.getElementById('errMsg').textContent = 'As senhas não coincidem.'; return; }
+
+      try {
+        const res = await fetch(`${API}/empresas`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, setor, senha })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          document.getElementById('successMsg').textContent = 'Empresa criada com sucesso!'
+          setTimeout(() => voltar(), 1500)
+        } else {
+          document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao criar empresa.'
+        }
+      } catch (e) {
+        document.getElementById('errMsg').textContent = 'Erro ao conectar ao servidor.'
+      }
+    }
+
+    function voltar() {
+      window.location.href = 'index.html'
+    }
+  </script>
+</body>
+</html>
