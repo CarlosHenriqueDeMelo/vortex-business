@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Nova Venda — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar { background: #111113; border-bottom: 0.5px solid #1e1e22; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-text { font-size: 16px; font-weight: 500; color: #fff; }
+    .logo-text span { color: #534AB7; }
+    .btn-voltar { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 7px 14px; font-size: 12px; color: #555; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+    .btn-voltar:hover { color: #aaa; border-color: #444; }
+    .content { flex: 1; display: flex; gap: 0; overflow: hidden; }
+    .form-side { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+    .cart-side { width: 320px; background: #111113; border-left: 0.5px solid #1e1e22; display: flex; flex-direction: column; }
+    .section { background: #161618; border: 0.5px solid #1e1e22; border-radius: 10px; padding: 18px; }
+    .section-title { font-size: 12px; color: #534AB7; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .label { font-size: 12px; color: #555; }
+    .input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 9px 12px; width: 100%; outline: none; font-family: inherit; }
+    .input:focus { border-color: #534AB7; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .pagamento-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pag-btn { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 8px 14px; font-size: 12px; color: #555; cursor: pointer; font-family: inherit; transition: all 0.12s; }
+    .pag-btn:hover { border-color: #534AB7; color: #aaa; }
+    .pag-btn.active { background: #1a1040; border-color: #534AB7; color: #7F77DD; }
+    .autocomplete-wrap { position: relative; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #1a1a1e; border: 0.5px solid #2a2a2e; border-radius: 8px; z-index: 10; max-height: 160px; overflow-y: auto; margin-top: 4px; }
+    .autocomplete-item { padding: 9px 12px; font-size: 12px; color: #aaa; cursor: pointer; }
+    .autocomplete-item:hover { background: #222; color: #fff; }
+    .cart-header { padding: 16px 18px; border-bottom: 0.5px solid #1e1e22; font-size: 13px; font-weight: 500; color: #fff; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .cart-item { background: #161618; border: 0.5px solid #1e1e22; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .cart-item-name { flex: 1; font-size: 12px; color: #ccc; }
+    .cart-item-qty { font-size: 12px; color: #534AB7; }
+    .cart-item-price { font-size: 12px; color: #aaa; }
+    .cart-item-remove { color: #E24B4A; cursor: pointer; font-size: 16px; }
+    .cart-empty { text-align: center; padding: 32px; color: #333; font-size: 12px; }
+    .cart-empty i { font-size: 28px; display: block; margin-bottom: 8px; }
+    .cart-footer { padding: 16px; border-top: 0.5px solid #1e1e22; display: flex; flex-direction: column; gap: 10px; }
+    .total-row { display: flex; justify-content: space-between; align-items: center; }
+    .total-label { font-size: 12px; color: #555; }
+    .total-value { font-size: 20px; font-weight: 500; color: #1D9E75; }
+    .desconto-row { display: flex; align-items: center; gap: 8px; }
+    .desconto-input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 12px; padding: 7px 10px; width: 80px; outline: none; font-family: inherit; }
+    .desconto-input:focus { border-color: #534AB7; }
+    .btn-finalizar { background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 14px; cursor: pointer; font-family: inherit; width: 100%; }
+    .btn-finalizar:hover { background: #3C3489; }
+    .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+    .badge.green { background: #0d2e1a; color: #1D9E75; }
+    .err { font-size: 12px; color: #E24B4A; min-height: 14px; }
+    select.input { cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+      <path d="M14 3 L24 14 L14 25 L4 14 Z" fill="#534AB7"/>
+      <path d="M14 8 L20 14 L14 20 L8 14 Z" fill="#0d0d0f"/>
+      <path d="M14 11 L17 14 L14 17 L11 14 Z" fill="#7F77DD"/>
+    </svg>
+    <div class="logo-text">Vortex<span> Business</span></div>
+  </div>
+  <button class="btn-voltar" onclick="window.location.href='dashboard.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+</div>
+
+<div class="content">
+  <div class="form-side">
+
+    <!-- CLIENTE -->
+    <div class="section">
+      <div class="section-title"><i class="ti ti-user"></i> Cliente</div>
+      <div class="autocomplete-wrap">
+        <div class="field">
+          <div class="label">Buscar cliente (opcional)</div>
+          <input class="input" type="text" id="clienteInput" placeholder="Digite o nome do cliente..." oninput="buscarCliente(this.value)" autocomplete="off"/>
+        </div>
+        <div class="autocomplete-list" id="clienteList" style="display:none"></div>
+      </div>
+      <div id="clienteSelecionado" style="display:none;margin-top:12px;background:#13121f;border:0.5px solid #2e2860;border-radius:8px;padding:10px 12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;color:#fff" id="clienteNome"></div>
+            <div style="font-size:11px;color:#534AB7" id="clienteInfo"></div>
+          </div>
+          <i class="ti ti-x" style="color:#555;cursor:pointer;font-size:16px" onclick="limparCliente()"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO -->
+    <div class="section">
+      <div class="section-title"><i class="ti ti-box"></i> Produtos</div>
+      <div class="autocomplete-wrap">
+        <div class="field">
+          <div class="label">Buscar produto</div>
+          <input class="input" type="text" id="produtoInput" placeholder="Digite o nome do produto..." oninput="buscarProduto(this.value)" autocomplete="off"/>
+        </div>
+        <div class="autocomplete-list" id="produtoList" style="display:none"></div>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field">
+          <div class="label">Quantidade</div>
+          <input class="input" type="number" id="qtd" value="1" min="1"/>
+        </div>
+        <div class="field">
+          <div class="label">Preço unitário (R$)</div>
+          <input class="input" type="number" id="precoUnit" step="0.01" placeholder="0,00"/>
+        </div>
+      </div>
+      <button style="margin-top:12px;background:#1a1040;border:0.5px solid #2e2860;border-radius:8px;padding:8px 16px;font-size:12px;color:#7F77DD;cursor:pointer;font-family:inherit;width:100%" onclick="adicionarItem()"><i class="ti ti-plus"></i> Adicionar ao carrinho</button>
+    </div>
+
+    <!-- DETALHES -->
+    <div class="section">
+      <div class="section-title"><i class="ti ti-info-circle"></i> Detalhes da venda</div>
+      <div class="grid2">
+        <div class="field">
+          <div class="label">Data da venda</div>
+          <input class="input" type="date" id="dataVenda"/>
+        </div>
+        <div class="field">
+          <div class="label">Cidade / Região</div>
+          <input class="input" type="text" id="cidade" placeholder="Ex: São Paulo"/>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <div class="label">Telefone</div>
+        <input class="input" type="text" id="telefone" placeholder="Ex: 11999990001"/>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <div class="label">Forma de pagamento</div>
+        <div class="pagamento-opts" id="pagamentoOpts">
+          <button class="pag-btn" onclick="setPagamento('Pix', this)">Pix</button>
+          <button class="pag-btn" onclick="setPagamento('Cartão', this)">Cartão</button>
+          <button class="pag-btn" onclick="setPagamento('Boleto', this)">Boleto</button>
+          <button class="pag-btn" onclick="setPagamento('Nota', this)">Nota (Fiado)</button>
+          <button class="pag-btn" onclick="setPagamento('Dinheiro', this)">Dinheiro</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <div class="label">Observação</div>
+        <input class="input" type="text" id="observacao" placeholder="Opcional..."/>
+      </div>
+    </div>
+
+    <div class="err" id="errMsg"></div>
+  </div>
+
+  <!-- CARRINHO -->
+  <div class="cart-side">
+    <div class="cart-header">🛒 Carrinho</div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty"><i class="ti ti-shopping-cart"></i>Nenhum produto adicionado</div>
+    </div>
+    <div class="cart-footer">
+      <div class="desconto-row">
+        <div class="label">Desconto (%)</div>
+        <input class="desconto-input" type="number" id="desconto" value="0" min="0" max="100" oninput="calcTotal()"/>
+      </div>
+      <div class="total-row">
+        <div class="total-label">Total</div>
+        <div class="total-value" id="totalDisplay">R$ 0,00</div>
+      </div>
+      <button class="btn-finalizar" onclick="finalizarVenda()"><i class="ti ti-check"></i> Finalizar venda</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:5000'
+  const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
+  let clienteSelecionadoId = null
+  let formaPagamento = null
+  let carrinho = []
+  let todosClientes = []
+  let todosProdutos = []
+
+  // Data de hoje
+  const hoje = new Date().toISOString().split('T')[0]
+  document.getElementById('dataVenda').value = hoje
+
+  // Carregar clientes e produtos
+  async function init() {
+    const [rc, rp] = await Promise.all([
+      fetch(`${API}/clientes`),
+      fetch(`${API}/produtos`)
+    ])
+    todosClientes = await rc.json()
+    todosProdutos = await rp.json()
+  }
+  init()
+
+  // Autocomplete cliente
+  function buscarCliente(val) {
+    const list = document.getElementById('clienteList')
+    if (!val) { list.style.display = 'none'; return; }
+    const filtrados = todosClientes.filter(c =>
+      c.empresa_id === empresa.id &&
+      c.nome.toLowerCase().includes(val.toLowerCase())
+    )
+    if (!filtrados.length) { list.style.display = 'none'; return; }
+    list.innerHTML = filtrados.map(c => `
+      <div class="autocomplete-item" onclick="selecionarCliente(${c.id})">
+        <strong>${c.nome}</strong> <span style="color:#534AB7">#${c.id}</span> — ${c.cidade || ''}
+      </div>
+    `).join('')
+    list.style.display = 'block'
+  }
+
+  function selecionarCliente(id) {
+    const c = todosClientes.find(x => x.id === id)
+    clienteSelecionadoId = id
+    document.getElementById('clienteInput').value = ''
+    document.getElementById('clienteList').style.display = 'none'
+    document.getElementById('clienteNome').textContent = c.nome
+    document.getElementById('clienteInfo').textContent = `#${c.id} — ${c.cidade || ''} ${c.telefone || ''}`
+    document.getElementById('clienteSelecionado').style.display = 'block'
+    if (c.cidade) document.getElementById('cidade').value = c.cidade
+    if (c.telefone) document.getElementById('telefone').value = c.telefone
+  }
+
+  function limparCliente() {
+    clienteSelecionadoId = null
+    document.getElementById('clienteSelecionado').style.display = 'none'
+    document.getElementById('clienteInput').value = ''
+  }
+
+  // Autocomplete produto
+  function buscarProduto(val) {
+    const list = document.getElementById('produtoList')
+    if (!val) { list.style.display = 'none'; return; }
+    const filtrados = todosProdutos.filter(p =>
+      p.empresa_id === empresa.id &&
+      p.nome.toLowerCase().includes(val.toLowerCase())
+    )
+    if (!filtrados.length) { list.style.display = 'none'; return; }
+    list.innerHTML = filtrados.map(p => `
+      <div class="autocomplete-item" onclick="selecionarProduto(${p.id})">
+        <strong>${p.nome}</strong> — R$ ${p.preco_venda.toFixed(2)} <span style="color:#555">(${p.quantidade} em estoque)</span>
+      </div>
+    `).join('')
+    list.style.display = 'block'
+  }
+
+  function selecionarProduto(id) {
+    const p = todosProdutos.find(x => x.id === id)
+    document.getElementById('produtoInput').value = p.nome
+    document.getElementById('produtoList').style.display = 'none'
+    document.getElementById('precoUnit').value = p.preco_venda.toFixed(2)
+    document.getElementById('produtoInput').dataset.id = id
+  }
+
+  function adicionarItem() {
+    const prodId = parseInt(document.getElementById('produtoInput').dataset.id)
+    const qtd = parseInt(document.getElementById('qtd').value)
+    const preco = parseFloat(document.getElementById('precoUnit').value)
+    if (!prodId || !qtd || !preco) { document.getElementById('errMsg').textContent = 'Selecione um produto, quantidade e preço.'; return; }
+    const prod = todosProdutos.find(p => p.id === prodId)
+    const existente = carrinho.find(i => i.produto_id === prodId)
+    if (existente) { existente.quantidade += qtd; existente.subtotal = existente.quantidade * existente.preco_unitario; }
+    else { carrinho.push({ produto_id: prodId, nome: prod.nome, quantidade: qtd, preco_unitario: preco, subtotal: qtd * preco }) }
+    document.getElementById('produtoInput').value = ''
+    document.getElementById('produtoInput').dataset.id = ''
+    document.getElementById('qtd').value = 1
+    document.getElementById('precoUnit').value = ''
+    document.getElementById('errMsg').textContent = ''
+    renderCarrinho()
+  }
+
+  function removerItem(id) {
+    carrinho = carrinho.filter(i => i.produto_id !== id)
+    renderCarrinho()
+  }
+
+  function renderCarrinho() {
+    const el = document.getElementById('cartItems')
+    if (!carrinho.length) { el.innerHTML = '<div class="cart-empty"><i class="ti ti-shopping-cart"></i>Nenhum produto adicionado</div>'; calcTotal(); return; }
+    el.innerHTML = carrinho.map(i => `
+      <div class="cart-item">
+        <div class="cart-item-name">${i.nome}</div>
+        <div class="cart-item-qty">${i.quantidade}x</div>
+        <div class="cart-item-price">R$ ${i.subtotal.toFixed(2)}</div>
+        <i class="ti ti-trash cart-item-remove" onclick="removerItem(${i.produto_id})"></i>
+      </div>
+    `).join('')
+    calcTotal()
+  }
+
+  function calcTotal() {
+    const subtotal = carrinho.reduce((s, i) => s + i.subtotal, 0)
+    const desc = parseFloat(document.getElementById('desconto').value) || 0
+    const total = subtotal * (1 - desc / 100)
+    document.getElementById('totalDisplay').textContent = `R$ ${total.toFixed(2)}`
+  }
+
+  function setPagamento(val, btn) {
+    formaPagamento = val
+    document.querySelectorAll('.pag-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+  }
+
+  async function finalizarVenda() {
+    if (!carrinho.length) { document.getElementById('errMsg').textContent = 'Adicione pelo menos um produto.'; return; }
+    if (!formaPagamento) { document.getElementById('errMsg').textContent = 'Selecione a forma de pagamento.'; return; }
+    const subtotal = carrinho.reduce((s, i) => s + i.subtotal, 0)
+    const desc = parseFloat(document.getElementById('desconto').value) || 0
+    const total = subtotal * (1 - desc / 100)
+    const payload = {
+      empresa_id: empresa.id,
+      cliente_id: clienteSelecionadoId,
+      forma_pagamento: formaPagamento,
+      desconto: desc,
+      total: total,
+      cidade: document.getElementById('cidade').value,
+      telefone: document.getElementById('telefone').value,
+      observacao: document.getElementById('observacao').value,
+      itens: carrinho
+    }
+    try {
+      const res = await fetch(`${API}/vendas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const data = await res.json()
+      if (res.ok) {
+        alert('Venda registrada com sucesso!')
+        window.location.href = 'dashboard.html'
+      } else {
+        document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao registrar venda.'
+      }
+    } catch(e) {
+      document.getElementById('errMsg').textContent = 'Erro ao conectar ao servidor.'
+    }
+  }
+</script>
+</body>
+</html>
