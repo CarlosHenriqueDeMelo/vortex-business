@@ -3,12 +3,14 @@ from flask_cors import CORS
 from database.database import inicializar_banco
 from routes.empresas import empresas_bp
 from routes.clientes import clientes_bp
+from routes.produtos import produtos_bp
 
 app = Flask(__name__)
 CORS(app)
 
 app.register_blueprint(empresas_bp)
 app.register_blueprint(clientes_bp)
+app.register_blueprint(produtos_bp)
 
 inicializar_banco()
 
