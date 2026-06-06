@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vortex Business</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; user-select: none; }
+    .titlebar { height: 32px; background: #0d0d0f; display: flex; align-items: center; justify-content: flex-end; padding: 0 12px; -webkit-app-region: drag; gap: 8px; }
+    .titlebar-btn { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; -webkit-app-region: no-drag; }
+    .titlebar-btn.close { background: #E24B4A; }
+    .titlebar-btn.min { background: #EF9F27; }
+    .titlebar-btn.max { background: #1D9E75; }
+    .header { padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid #1e1e22; }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-text { font-size: 20px; font-weight: 500; color: #fff; }
+    .logo-text span { color: #534AB7; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-new { background: transparent; color: #555; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 8px 18px; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .btn-new:hover { color: #aaa; border-color: #444; }
+    .btn-gear { background: transparent; border: 0.5px solid #2e2860; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: #534AB7; font-size: 17px; display: flex; align-items: center; }
+    .btn-gear:hover { background: #1a1040; }
+    .screen { flex: 1; padding: 32px 28px; display: flex; flex-direction: column; align-items: center; }
+    .headline { font-size: 14px; color: #555; margin-bottom: 28px; }
+    .profiles { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+    .profile-card { width: 140px; cursor: pointer; text-align: center; }
+    .profile-img { width: 140px; height: 88px; border-radius: 8px; border: 1.5px solid #222; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 10px; transition: transform 0.15s, border-color 0.15s; }
+    .profile-card:hover .profile-img { transform: scale(1.06); border-color: #534AB7; }
+    .profile-card.selected .profile-img { border-color: #534AB7; }
+    .initials { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 500; color: #fff; }
+    .profile-name { font-size: 13px; color: #aaa; }
+    .tag { font-size: 10px; background: #1a1a2e; color: #7F77DD; border-radius: 4px; padding: 2px 6px; margin-top: 4px; display: inline-block; }
+    .divider { height: 0.5px; background: #1e1e22; margin: 28px 0; width: 100%; max-width: 600px; }
+    .pin-section { display: none; flex-direction: column; align-items: center; gap: 14px; }
+    .pin-section.visible { display: flex; }
+    .pin-dots { display: flex; gap: 12px; }
+    .pin-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #333; background: transparent; transition: background 0.1s; }
+    .pin-dot.filled { background: #534AB7; border-color: #534AB7; }
+    .pin-input { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 15px; padding: 10px 16px; width: 180px; text-align: center; letter-spacing: 6px; outline: none; font-family: inherit; }
+    .pin-input:focus { border-color: #534AB7; }
+    .btn-enter { background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 10px 32px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .btn-enter:hover { background: #3C3489; }
+    .err-msg { font-size: 12px; color: #E24B4A; min-height: 16px; }
+    .add-bg { background: #161618; border: 1.5px dashed #2a2a2e !important; }
+    .add-icon { font-size: 24px; color: #333; }
+    .profile-card.add-new .profile-name { color: #444; }
+  </style>
+</head>
+<body>
+  <div class="titlebar">
+    <button class="titlebar-btn min" onclick="window.require('electron').remote.getCurrentWindow().minimize()"></button>
+    <button class="titlebar-btn max" onclick="window.require('electron').remote.getCurrentWindow().maximize()"></button>
+    <button class="titlebar-btn close" onclick="window.require('electron').remote.getCurrentWindow().close()"></button>
+  </div>
+
+  <div class="header">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+        <path d="M14 3 L24 14 L14 25 L4 14 Z" fill="#534AB7"/>
+        <path d="M14 8 L20 14 L14 20 L8 14 Z" fill="#0d0d0f"/>
+        <path d="M14 11 L17 14 L14 17 L11 14 Z" fill="#7F77DD"/>
+      </svg>
+      <div class="logo-text">Vortex<span> Business</span></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-new" onclick="novaEmpresa()">+ Nova empresa</button>
+      <button class="btn-gear"><i class="ti ti-settings"></i></button>
+    </div>
+  </div>
+
+  <div class="screen">
+    <p class="headline">Selecione a empresa para continuar</p>
+    <div class="profiles" id="profiles">
+      <div class="profile-card add-new" onclick="novaEmpresa()">
+        <div class="profile-img add-bg"><i class="ti ti-plus add-icon"></i></div>
+        <div class="profile-name">Adicionar empresa</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="pin-section" id="pinSection">
+      <p style="font-size:15px;font-weight:500;" id="selectedName"></p>
+      <p style="font-size:13px;color:#555;">Digite a senha</p>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <input class="pin-input" type="password" maxlength="4" id="pinInput" placeholder="••••" oninput="updateDots(this.value)" onkeydown="if(event.key==='Enter')entrar()"/>
+      <button class="btn-enter" onclick="entrar()">Entrar <i class="ti ti-arrow-right"></i></button>
+      <div class="err-msg" id="errMsg"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:5000'
+    let empresaSelecionada = null
+
+    const cores = ['#1a1040','#0d2e1a','#2e1010','#0d1e2e','#2e1e00']
+
+    async function carregarEmpresas() {
+      const res = await fetch(`${API}/empresas`)
+      const empresas = await res.json()
+      const container = document.getElementById('profiles')
+      container.innerHTML = ''
+      empresas.forEach((emp, i) => {
+        const iniciais = emp.nome.split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase()
+        const cor = cores[i % cores.length]
+        const card = document.createElement('div')
+        card.className = 'profile-card'
+        card.innerHTML = `
+          <div class="profile-img">
+            <div class="initials" style="background:${cor};width:100%;height:100%;">${iniciais}</div>
+          </div>
+          <div class="profile-name">${emp.nome}</div>
+          <div class="tag">${emp.setor || ''}</div>
+        `
+        card.onclick = () => selecionarEmpresa(card, emp)
+        container.appendChild(card)
+      })
+      const addCard = document.createElement('div')
+      addCard.className = 'profile-card add-new'
+      addCard.innerHTML = `<div class="profile-img add-bg"><i class="ti ti-plus add-icon"></i></div><div class="profile-name">Adicionar empresa</div>`
+      addCard.onclick = novaEmpresa
+      container.appendChild(addCard)
+    }
+
+    function selecionarEmpresa(card, emp) {
+      document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('selected'))
+      card.classList.add('selected')
+      empresaSelecionada = emp
+      document.getElementById('selectedName').textContent = emp.nome
+      document.getElementById('pinSection').classList.add('visible')
+      document.getElementById('pinInput').value = ''
+      document.getElementById('errMsg').textContent = ''
+      updateDots('')
+      setTimeout(() => document.getElementById('pinInput').focus(), 100)
+    }
+
+    function updateDots(val) {
+      document.querySelectorAll('.pin-dot').forEach((d,i) => d.classList.toggle('filled', i < val.length))
+    }
+
+    async function entrar() {
+      const senha = document.getElementById('pinInput').value
+      if (senha.length < 4) return
+      const res = await fetch(`${API}/empresas/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: empresaSelecionada.id, senha })
+      })
+      const data = await res.json()
+      if (data.sucesso) {
+        localStorage.setItem('empresa', JSON.stringify(data.empresa))
+        window.location.href = 'dashboard.html'
+      } else {
+        document.getElementById('errMsg').textContent = 'Senha incorreta.'
+        document.getElementById('pinInput').value = ''
+        updateDots('')
+      }
+    }
+
+    function novaEmpresa() {
+      alert('Cadastro de empresa — em breve!')
+    }
+
+    carregarEmpresas()
+  </script>
+</body>
+</html>

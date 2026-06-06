@@ -1,0 +1,12 @@
+{
+  "name": "vortex-business",
+  "version": "1.0.0",
+  "description": "Sistema de gestão para micro empresas",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^42.3.3"
+  }
+}
