@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Novo Produto — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 480px; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .title { font-size: 16px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .title i { color: #534AB7; }
+    .btn-voltar { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #555; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; }
+    .btn-voltar:hover { color: #aaa; border-color: #444; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .label { font-size: 12px; color: #555; }
+    .input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 10px 12px; width: 100%; outline: none; font-family: inherit; }
+    .input:focus { border-color: #534AB7; }
+    select.input { cursor: pointer; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .btn-primary { width: 100%; background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-primary:hover { background: #3C3489; }
+    .err { font-size: 12px; color: #E24B4A; min-height: 16px; text-align: center; margin-top: 4px; }
+    .success { font-size: 12px; color: #1D9E75; min-height: 16px; text-align: center; margin-top: 4px; }
+    .divider { height: 0.5px; background: #1e1e22; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="title"><i class="ti ti-box"></i> Novo Produto</div>
+      <button class="btn-voltar" onclick="window.location.href='dashboard.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+    </div>
+    <div class="divider"></div>
+
+    <div class="field">
+      <div class="label">Nome do produto *</div>
+      <input class="input" type="text" id="nome" placeholder="Ex: Arroz 5kg"/>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <div class="label">Categoria</div>
+        <select class="input" id="categoria">
+          <option value="">Selecione</option>
+          <option>Alimentos</option>
+          <option>Bebidas</option>
+          <option>Limpeza</option>
+          <option>Higiene</option>
+          <option>Moda</option>
+          <option>Eletrônicos</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="label">Unidade</div>
+        <select class="input" id="unidade">
+          <option value="un">Unidade (un)</option>
+          <option value="kg">Quilograma (kg)</option>
+          <option value="lt">Litro (lt)</option>
+          <option value="cx">Caixa (cx)</option>
+          <option value="pc">Peça (pc)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <div class="label">Preço de custo (R$)</div>
+        <input class="input" type="number" id="preco_custo" step="0.01" placeholder="0,00"/>
+      </div>
+      <div class="field">
+        <div class="label">Preço de venda (R$)</div>
+        <input class="input" type="number" id="preco_venda" step="0.01" placeholder="0,00"/>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <div class="label">Quantidade em estoque</div>
+        <input class="input" type="number" id="quantidade" value="0" min="0"/>
+      </div>
+      <div class="field">
+        <div class="label">Quantidade mínima</div>
+        <input class="input" type="number" id="quantidade_minima" value="5" min="0"/>
+      </div>
+    </div>
+
+    <div class="err" id="errMsg"></div>
+    <div class="success" id="successMsg"></div>
+
+    <button class="btn-primary" onclick="cadastrar()"><i class="ti ti-check"></i> Cadastrar produto</button>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:5000'
+    const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
+
+    async function cadastrar() {
+      const nome = document.getElementById('nome').value.trim()
+      document.getElementById('errMsg').textContent = ''
+      document.getElementById('successMsg').textContent = ''
+      if (!nome) { document.getElementById('errMsg').textContent = 'Nome é obrigatório.'; return; }
+      try {
+        const res = await fetch(`${API}/produtos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            empresa_id: empresa.id,
+            nome,
+            categoria: document.getElementById('categoria').value,
+            unidade: document.getElementById('unidade').value,
+            preco_custo: parseFloat(document.getElementById('preco_custo').value) || 0,
+            preco_venda: parseFloat(document.getElementById('preco_venda').value) || 0,
+            quantidade: parseInt(document.getElementById('quantidade').value) || 0,
+            quantidade_minima: parseInt(document.getElementById('quantidade_minima').value) || 5
+          })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          document.getElementById('successMsg').textContent = 'Produto cadastrado com sucesso!'
+          setTimeout(() => window.location.href = 'dashboard.html', 1500)
+        } else {
+          document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao cadastrar.'
+        }
+      } catch(e) {
+        document.getElementById('errMsg').textContent = 'Erro ao conectar ao servidor.'
+      }
+    }
+  </script>
+</body>
+</html>
