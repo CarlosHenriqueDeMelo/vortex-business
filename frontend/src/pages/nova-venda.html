@@ -327,7 +327,8 @@
       const res = await fetch(`${API}/vendas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (res.ok) {
-        alert('Venda registrada com sucesso!')
+        const { shell } = require('electron')
+        shell.openPath(data.pdf)
         window.location.href = 'dashboard.html'
       } else {
         document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao registrar venda.'

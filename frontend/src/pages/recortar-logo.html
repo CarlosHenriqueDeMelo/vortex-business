@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Recortar Logo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .title { font-size: 16px; font-weight: 500; color: #fff; }
+    .subtitle { font-size: 13px; color: #555; margin-top: 4px; text-align: center; }
+    .crop-container { position: relative; width: 300px; height: 300px; overflow: hidden; border-radius: 12px; border: 2px solid #534AB7; background: #111; cursor: grab; }
+    .crop-container:active { cursor: grabbing; }
+    .crop-container img { position: absolute; user-select: none; -webkit-user-drag: none; }
+    .overlay { position: absolute; inset: 0; border: 3px solid #534AB7; border-radius: 12px; pointer-events: none; z-index: 10; }
+    .controls { display: flex; flex-direction: column; gap: 10px; width: 300px; }
+    .control-row { display: flex; align-items: center; gap: 12px; }
+    .control-label { font-size: 12px; color: #555; width: 50px; }
+    input[type=range] { flex: 1; accent-color: #534AB7; }
+    .btn-row { display: flex; gap: 10px; width: 300px; }
+    .btn-primary { flex: 1; background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .btn-primary:hover { background: #3C3489; }
+    .btn-ghost { flex: 1; background: transparent; color: #555; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .btn-ghost:hover { color: #aaa; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="title" style="text-align:center">Ajustar logo</div>
+    <div class="subtitle">Arraste para mover · Use o zoom para ajustar</div>
+  </div>
+
+  <div class="crop-container" id="cropContainer">
+    <img id="cropImg" draggable="false"/>
+    <div class="overlay"></div>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <div class="control-label">Zoom</div>
+      <input type="range" id="zoomRange" min="50" max="300" value="100" oninput="updateTransform()"/>
+    </div>
+    <div class="control-row">
+      <div class="control-label">Largura</div>
+      <input type="range" id="scaleX" min="50" max="300" value="100" oninput="updateTransform()"/>
+    </div>
+    <div class="control-row">
+      <div class="control-label">Altura</div>
+      <input type="range" id="scaleY" min="50" max="300" value="100" oninput="updateTransform()"/>
+    </div>
+    <div class="control-row">
+      <div class="control-label">Rotação</div>
+      <input type="range" id="rotRange" min="-180" max="180" value="0" oninput="updateTransform()"/>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-ghost" onclick="cancelar()">Cancelar</button>
+    <button class="btn-primary" onclick="confirmar()">Usar esta imagem</button>
+  </div>
+
+  <script>
+    const img = document.getElementById('cropImg')
+    const container = document.getElementById('cropContainer')
+    let scale = 1, rotation = 0
+    let posX = 0, posY = 0
+    let dragging = false, startX, startY, startPosX, startPosY
+
+    const params = new URLSearchParams(window.location.search)
+    const src = localStorage.getItem('cropSrc')
+    if (src) img.src = src
+
+    img.onload = () => {
+      const ratio = Math.max(300 / img.naturalWidth, 300 / img.naturalHeight)
+      scale = ratio
+      document.getElementById('zoomRange').value = Math.round(ratio * 100)
+      posX = (300 - img.naturalWidth * scale) / 2
+      posY = (300 - img.naturalHeight * scale) / 2
+      updateTransform()
+    }
+
+    function updateTransform() {
+      scale = document.getElementById('zoomRange').value / 100
+      const sx = document.getElementById('scaleX').value / 100
+      const sy = document.getElementById('scaleY').value / 100
+      rotation = document.getElementById('rotRange').value
+      img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale * sx}, ${scale * sy}) rotate(${rotation}deg)`
+      img.style.transformOrigin = '0 0'
+      img.style.left = '0'
+      img.style.top = '0'
+    }
+
+    container.addEventListener('mousedown', (e) => {
+      dragging = true
+      startX = e.clientX
+      startY = e.clientY
+      startPosX = posX
+      startPosY = posY
+    })
+
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return
+      posX = startPosX + (e.clientX - startX)
+      posY = startPosY + (e.clientY - startY)
+      updateTransform()
+    })
+
+    document.addEventListener('mouseup', () => dragging = false)
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault()
+      const zoom = parseInt(document.getElementById('zoomRange').value)
+      document.getElementById('zoomRange').value = Math.max(50, Math.min(300, zoom - e.deltaY * 0.2))
+      updateTransform()
+    }, { passive: false })
+
+    function confirmar() {
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 300
+      const ctx = canvas.getContext('2d')
+      const sx = document.getElementById('scaleX').value / 100
+      const sy = document.getElementById('scaleY').value / 100
+      const finalW = img.naturalWidth * scale * sx
+      const finalH = img.naturalHeight * scale * sy
+      ctx.save()
+      ctx.translate(posX + finalW / 2, posY + finalH / 2)
+      ctx.rotate(rotation * Math.PI / 180)
+      ctx.drawImage(img, -finalW / 2, -finalH / 2, finalW, finalH)
+      ctx.restore()
+      const dataUrl = canvas.toDataURL('image/png')
+      localStorage.setItem('croppedLogo', dataUrl)
+      window.history.back()
+    }
+
+    function cancelar() {
+      localStorage.removeItem('cropSrc')
+      window.history.back()
+    }
+  </script>
+</body>
+</html>

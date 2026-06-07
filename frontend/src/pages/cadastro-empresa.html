@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 420px; }
+    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 440px; }
     .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; justify-content: center; }
     .logo-text { font-size: 18px; font-weight: 500; color: #fff; }
     .logo-text span { color: #534AB7; }
@@ -26,6 +26,11 @@
     .success { font-size: 12px; color: #1D9E75; min-height: 16px; text-align: center; margin-top: 4px; }
     .divider { height: 0.5px; background: #1e1e22; margin: 20px 0; }
     .pass-hint { font-size: 11px; color: #333; margin-top: 2px; }
+    .logo-upload { border: 1.5px dashed #2a2a2e; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.12s; }
+    .logo-upload:hover { border-color: #534AB7; }
+    .logo-upload img { width: 80px; height: 80px; object-fit: contain; border-radius: 8px; display: none; }
+    .logo-upload-text { font-size: 12px; color: #444; margin-top: 8px; }
+    .logo-upload i { font-size: 28px; color: #333; }
   </style>
 </head>
 <body>
@@ -43,6 +48,16 @@
     <div class="subtitle">Preencha os dados para criar o perfil</div>
 
     <div class="divider"></div>
+
+    <div class="field">
+      <div class="label">Logo da empresa (opcional)</div>
+      <div class="logo-upload" onclick="document.getElementById('logoInput').click()">
+        <img id="logoPreview"/>
+        <i class="ti ti-photo" id="logoIcon"></i>
+        <div class="logo-upload-text" id="logoText">Clique para selecionar imagem<br>PNG ou JPG — máx 2MB</div>
+      </div>
+      <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="previewLogo(this)"/>
+    </div>
 
     <div class="field">
       <div class="label">Nome da empresa *</div>
@@ -84,6 +99,34 @@
 
   <script>
     const API = 'http://127.0.0.1:5000'
+    let logoBase64 = null
+
+    function previewLogo(input) {
+      const file = input.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        localStorage.setItem('cropSrc', e.target.result)
+        window.location.href = 'recortar-logo.html'
+      }
+      reader.readAsDataURL(file)
+    }
+
+    function checkCropped() {
+      const cropped = localStorage.getItem('croppedLogo')
+      if (cropped) {
+        document.getElementById('logoPreview').src = cropped
+        document.getElementById('logoPreview').style.display = 'block'
+        document.getElementById('logoIcon').style.display = 'none'
+        document.getElementById('logoText').textContent = 'Logo ajustada'
+        logoBase64 = cropped.split(',')[1]
+        localStorage.removeItem('croppedLogo')
+        localStorage.removeItem('cropSrc')
+      }
+    }
+    window.addEventListener('load', checkCropped)
+    window.addEventListener('pageshow', checkCropped)
+    window.addEventListener('focus', checkCropped)
 
     async function cadastrar() {
       const nome = document.getElementById('nome').value.trim()
@@ -102,7 +145,7 @@
         const res = await fetch(`${API}/empresas`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, setor, senha })
+          body: JSON.stringify({ nome, setor, senha, logo_base64: logoBase64 })
         })
         const data = await res.json()
         if (res.ok) {

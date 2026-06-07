@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Gerenciar Empresa — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 460px; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .title { font-size: 16px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .title i { color: #534AB7; }
+    .btn-voltar { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #555; cursor: pointer; font-family: inherit; }
+    .btn-voltar:hover { color: #aaa; border-color: #444; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .label { font-size: 12px; color: #555; }
+    .input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 10px 12px; width: 100%; outline: none; font-family: inherit; }
+    .input:focus { border-color: #534AB7; }
+    select.input { cursor: pointer; }
+    .btn-primary { width: 100%; background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-primary:hover { background: #3C3489; }
+    .btn-danger { width: 100%; background: transparent; color: #E24B4A; border: 0.5px solid #2e0d0d; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-danger:hover { background: #2e0d0d; }
+    .err { font-size: 12px; color: #E24B4A; min-height: 16px; text-align: center; margin-top: 4px; }
+    .success { font-size: 12px; color: #1D9E75; min-height: 16px; text-align: center; margin-top: 4px; }
+    .divider { height: 0.5px; background: #1e1e22; margin: 16px 0; }
+    .logo-upload { border: 1.5px dashed #2a2a2e; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: border-color 0.12s; display: flex; align-items: center; gap: 14px; }
+    .logo-upload:hover { border-color: #534AB7; }
+    .logo-preview { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 0.5px solid #2a2a2e; }
+    .logo-initials { width: 60px; height: 60px; border-radius: 8px; background: #1a1040; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 500; color: #7F77DD; flex-shrink: 0; }
+    .logo-info { text-align: left; }
+    .logo-info-title { font-size: 13px; color: #aaa; }
+    .logo-info-sub { font-size: 11px; color: #444; margin-top: 4px; }
+    .section-label { font-size: 11px; color: #534AB7; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+    .auth-overlay { display: none; flex-direction: column; gap: 14px; }
+    .auth-overlay.visible { display: flex; }
+    .main-content { display: flex; flex-direction: column; gap: 0; }
+    .main-content.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="title"><i class="ti ti-settings"></i> Configurações da Empresa</div>
+      <button class="btn-voltar" onclick="window.location.href='index.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+    </div>
+
+    <div class="auth-overlay visible" id="authOverlay">
+      <div style="font-size:13px;color:#aaa;text-align:center">Digite a senha para acessar as configurações</div>
+      <div class="field">
+        <div class="label">Empresa</div>
+        <select class="input" id="empresaSel"></select>
+      </div>
+      <div class="field">
+        <div class="label">Senha</div>
+        <input class="input" type="password" id="senhaAuth" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')autenticar()"/>
+      </div>
+      <div class="err" id="authErr"></div>
+      <button class="btn-primary" onclick="autenticar()">Entrar nas configurações</button>
+    </div>
+
+    <div class="main-content hidden" id="mainContent">
+      <div class="section-label">Logo da empresa</div>
+      <div class="logo-upload" onclick="document.getElementById('logoInput').click()">
+        <div class="logo-initials" id="logoInitials"></div>
+        <img class="logo-preview" id="logoPreview" style="display:none"/>
+        <div class="logo-info">
+          <div class="logo-info-title">Clique para trocar a logo</div>
+          <div class="logo-info-sub">PNG ou JPG — máx 2MB</div>
+        </div>
+      </div>
+      <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="previewLogo(this)"/>
+
+      <div class="divider"></div>
+      <div class="section-label">Dados da empresa</div>
+
+      <div class="field">
+        <div class="label">Nome da empresa</div>
+        <input class="input" type="text" id="nome"/>
+      </div>
+      <div class="field">
+        <div class="label">Setor</div>
+        <select class="input" id="setor">
+          <option value="">Selecione</option>
+          <option>Varejo</option><option>Atacado</option><option>Alimentação</option>
+          <option>Moda</option><option>Serviços</option><option>Tecnologia</option>
+          <option>Saúde</option><option>Outro</option>
+        </select>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-label">Mudar senha</div>
+
+      <div class="field">
+        <div class="label">Nova senha (4 dígitos)</div>
+        <input class="input" type="password" id="novaSenha" maxlength="4" placeholder="••••"/>
+      </div>
+      <div class="field">
+        <div class="label">Confirmar nova senha</div>
+        <input class="input" type="password" id="novaSenha2" maxlength="4" placeholder="••••"/>
+      </div>
+
+      <div class="err" id="errMsg"></div>
+      <div class="success" id="successMsg"></div>
+
+      <button class="btn-primary" onclick="salvar()"><i class="ti ti-check"></i> Salvar alterações</button>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:5000'
+    let empresaAtual = null
+    let logoBase64 = null
+
+    async function init() {
+      const res = await fetch(`${API}/empresas`)
+      const empresas = await res.json()
+      const sel = document.getElementById('empresaSel')
+      empresas.forEach(e => {
+        const opt = document.createElement('option')
+        opt.value = e.id
+        opt.textContent = e.nome
+        sel.appendChild(opt)
+      })
+    }
+    init()
+
+    async function autenticar() {
+      const id = document.getElementById('empresaSel').value
+      const senha = document.getElementById('senhaAuth').value
+      document.getElementById('authErr').textContent = ''
+      if (!id || !senha) { document.getElementById('authErr').textContent = 'Selecione a empresa e digite a senha.'; return; }
+      const res = await fetch(`${API}/empresas/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: parseInt(id), senha })
+      })
+      const data = await res.json()
+      if (data.sucesso) {
+        empresaAtual = data.empresa
+        document.getElementById('authOverlay').classList.remove('visible')
+        document.getElementById('mainContent').classList.remove('hidden')
+        document.getElementById('nome').value = empresaAtual.nome
+        document.getElementById('setor').value = empresaAtual.setor || ''
+        const iniciais = empresaAtual.nome.split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase()
+        document.getElementById('logoInitials').textContent = iniciais
+        if (empresaAtual.foto_path) {
+          document.getElementById('logoPreview').src = `file://${empresaAtual.foto_path}`
+          document.getElementById('logoPreview').style.display = 'block'
+          document.getElementById('logoInitials').style.display = 'none'
+        }
+      } else {
+        document.getElementById('authErr').textContent = 'Senha incorreta.'
+      }
+    }
+
+    function previewLogo(input) {
+      const file = input.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const size = Math.min(img.width, img.height)
+          canvas.width = 300
+          canvas.height = 300
+          const ctx = canvas.getContext('2d')
+          const sx = (img.width - size) / 2
+          const sy = (img.height - size) / 2
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, 300, 300)
+          const dataUrl = canvas.toDataURL('image/png')
+          document.getElementById('logoPreview').src = dataUrl
+          document.getElementById('logoPreview').style.display = 'block'
+          document.getElementById('logoInitials').style.display = 'none'
+          logoBase64 = dataUrl.split(',')[1]
+        }
+        img.src = e.target.result
+      }
+      reader.readAsDataURL(file)
+    }
+
+    async function salvar() {
+      document.getElementById('errMsg').textContent = ''
+      document.getElementById('successMsg').textContent = ''
+      const nome = document.getElementById('nome').value.trim()
+      const setor = document.getElementById('setor').value
+      const novaSenha = document.getElementById('novaSenha').value
+      const novaSenha2 = document.getElementById('novaSenha2').value
+      if (!nome) { document.getElementById('errMsg').textContent = 'Nome é obrigatório.'; return; }
+      if (novaSenha && novaSenha !== novaSenha2) { document.getElementById('errMsg').textContent = 'As senhas não coincidem.'; return; }
+      if (novaSenha && novaSenha.length < 4) { document.getElementById('errMsg').textContent = 'A senha deve ter 4 dígitos.'; return; }
+      const payload = { nome, setor, logo_base64: logoBase64 }
+      if (novaSenha) payload.senha = novaSenha
+      const res = await fetch(`${API}/empresas/${empresaAtual.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (res.ok) {
+        document.getElementById('successMsg').textContent = 'Alterações salvas com sucesso!'
+      } else {
+        document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao salvar.'
+      }
+    }
+  </script>
+</body>
+</html>
