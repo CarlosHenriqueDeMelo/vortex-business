@@ -202,7 +202,7 @@
     const list = document.getElementById('clienteList')
     if (!val) { list.style.display = 'none'; return; }
     const filtrados = todosClientes.filter(c =>
-      c.empresa_id === empresa.id &&
+      c.empresa_id == empresa.id &&
       c.nome.toLowerCase().includes(val.toLowerCase())
     )
     if (!filtrados.length) { list.style.display = 'none'; return; }
@@ -237,7 +237,7 @@
     const list = document.getElementById('produtoList')
     if (!val) { list.style.display = 'none'; return; }
     const filtrados = todosProdutos.filter(p =>
-      p.empresa_id === empresa.id &&
+      p.empresa_id == empresa.id &&
       p.nome.toLowerCase().includes(val.toLowerCase())
     )
     if (!filtrados.length) { list.style.display = 'none'; return; }

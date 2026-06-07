@@ -219,3 +219,99 @@
 </script>
 </body>
 </html>
+<script>
+async function carregarDados() {
+  const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
+  if (!empresa.id) return
+  const API = 'http://127.0.0.1:5000'
+
+  // Vendas
+  const rv = await fetch(`${API}/vendas`)
+  const vendas = await rv.json()
+  const vendasEmpresa = vendas.filter(v => v.empresa_id == empresa.id)
+
+  // Últimas vendas no dashboard
+  const tbody = document.getElementById('ultimasVendas')
+  if (vendasEmpresa.length) {
+    tbody.innerHTML = vendasEmpresa.slice(-5).reverse().map(v => `
+      <tr>
+        <td>${v.cliente_id ? '#'+v.cliente_id : '—'}</td>
+        <td>R$ ${parseFloat(v.total).toFixed(2)}</td>
+        <td><span class="badge ${v.forma_pagamento === 'Pix' ? 'green' : v.forma_pagamento === 'Nota' ? 'amber' : 'blue'}">${v.forma_pagamento}</span></td>
+        <td>${v.data_venda ? v.data_venda.substring(0,10) : '—'}</td>
+      </tr>
+    `).join('')
+  }
+
+  // Lista de vendas na aba vendas
+  const tbodyVendas = document.getElementById('listaVendas')
+  if (vendasEmpresa.length) {
+    tbodyVendas.innerHTML = vendasEmpresa.reverse().map(v => `
+      <tr>
+        <td>${v.data_venda ? v.data_venda.substring(0,10) : '—'}</td>
+        <td>${v.cliente_id ? '#'+v.cliente_id : '—'}</td>
+        <td>R$ ${parseFloat(v.total).toFixed(2)}</td>
+        <td><span class="badge ${v.forma_pagamento === 'Pix' ? 'green' : v.forma_pagamento === 'Nota' ? 'amber' : 'blue'}">${v.forma_pagamento}</span></td>
+      </tr>
+    `).join('')
+  }
+
+  // Produtos na aba estoque
+  const rp = await fetch(`${API}/produtos`)
+  const produtos = await rp.json()
+  const produtosEmpresa = produtos.filter(p => p.empresa_id == empresa.id)
+  const tbodyEstoque = document.getElementById('listaEstoque')
+  if (produtosEmpresa.length) {
+    tbodyEstoque.innerHTML = produtosEmpresa.map(p => `
+      <tr>
+        <td>${p.nome}</td>
+        <td>${p.categoria || '—'}</td>
+        <td>${p.quantidade}</td>
+        <td>R$ ${parseFloat(p.preco_venda).toFixed(2)}</td>
+        <td><span class="badge ${p.quantidade === 0 ? 'red' : p.quantidade <= p.quantidade_minima ? 'amber' : 'green'}">${p.quantidade === 0 ? 'Zerado' : p.quantidade <= p.quantidade_minima ? 'Baixo' : 'Normal'}</span></td>
+      </tr>
+    `).join('')
+  }
+
+  // Clientes
+  const rc = await fetch(`${API}/clientes`)
+  const clientes = await rc.json()
+  const clientesEmpresa = clientes.filter(c => c.empresa_id == empresa.id)
+  const tbodyClientes = document.getElementById('listaClientes')
+  if (clientesEmpresa.length) {
+    tbodyClientes.innerHTML = clientesEmpresa.map(c => `
+      <tr>
+        <td>#${c.id}</td>
+        <td>${c.nome}</td>
+        <td>${c.cidade || '—'}</td>
+        <td>${c.telefone || '—'}</td>
+        <td>${c.divida_atual > 0 ? '<span class="badge amber">R$ '+c.divida_atual.toFixed(2)+'</span>' : '—'}</td>
+      </tr>
+    `).join('')
+  }
+
+  // Métricas
+  const totalVendas = vendasEmpresa.filter(v => v.data_venda && v.data_venda.startsWith(new Date().toISOString().split('T')[0])).reduce((s, v) => s + v.total, 0)
+  document.getElementById('vendasHoje').textContent = 'R$ ' + totalVendas.toFixed(2)
+  document.getElementById('totalItens').textContent = produtosEmpresa.reduce((s, p) => s + p.quantidade, 0)
+  document.getElementById('totalClientes').textContent = clientesEmpresa.length
+  document.getElementById('totalFiado').textContent = 'R$ ' + clientesEmpresa.reduce((s, c) => s + c.divida_atual, 0).toFixed(2)
+
+  // Fornecedores
+  const rf = await fetch(`${API}/fornecedores`)
+  const fornecedores = await rf.json()
+  const fornecedoresEmpresa = fornecedores.filter(f => f.empresa_id == empresa.id)
+  const tbodyFornecedores = document.getElementById('listaFornecedores')
+  if (fornecedoresEmpresa.length) {
+    tbodyFornecedores.innerHTML = fornecedoresEmpresa.map(f => `
+      <tr>
+        <td>${f.nome}</td>
+        <td>${f.categoria || '—'}</td>
+        <td>${f.telefone || '—'}</td>
+        <td><span class="badge ${f.ativo ? 'green' : 'amber'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
+      </tr>
+    `).join('')
+  }
+}
+carregarDados()
+</script>
