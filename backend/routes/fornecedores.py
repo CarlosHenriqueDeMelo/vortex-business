@@ -21,3 +21,11 @@ def criar_fornecedores():
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Fornecedor criado com sucesso!'}), 201
+
+@fornecedores_bp.route('/fornecedores/<int:id>', methods=['DELETE'])
+def deletar_fornecedor(id):
+    conn = get_connection()
+    conn.execute('DELETE FROM fornecedores WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Fornecedor deletado com sucesso!'}), 200

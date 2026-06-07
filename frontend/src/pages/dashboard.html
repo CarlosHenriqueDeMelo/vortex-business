@@ -53,6 +53,7 @@
     .btn-primary:hover { background: #3C3489; }
     .empty { text-align: center; padding: 40px; color: #333; font-size: 13px; }
     .empty i { font-size: 36px; margin-bottom: 12px; display: block; }
+    .btn-del { background: transparent; border: none; color: #E24B4A; cursor: pointer; font-size: 16px; padding: 2px 6px; }
   </style>
 </head>
 <body>
@@ -89,7 +90,6 @@
 
   <div class="main">
 
-    <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <div class="page-title" id="saudacao">Olá!</div>
       <div class="page-sub" id="dataHoje"></div>
@@ -108,21 +108,19 @@
       </div>
     </div>
 
-    <!-- ESTOQUE -->
     <div class="page" id="page-estoque">
       <div class="row-top">
         <div><div class="page-title">Estoque</div><div class="page-sub">Gerencie seus produtos</div></div>
-        <button class="btn-primary"><i class="ti ti-plus"></i> Novo produto</button>
+        <button class="btn-primary" onclick="window.location.href='novo-produto.html'"><i class="ti ti-plus"></i> Novo produto</button>
       </div>
       <div class="table-wrap">
         <table>
-          <tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Preço venda</th><th>Status</th></tr>
-          <tbody id="listaEstoque"><tr><td colspan="5" class="empty"><i class="ti ti-box"></i>Nenhum produto cadastrado</td></tr></tbody>
+          <tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Preço venda</th><th>Status</th><th></th></tr>
+          <tbody id="listaEstoque"><tr><td colspan="6" class="empty"><i class="ti ti-box"></i>Nenhum produto cadastrado</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- VENDAS -->
     <div class="page" id="page-vendas">
       <div class="row-top">
         <div><div class="page-title">Vendas</div><div class="page-sub">Registre e acompanhe vendas</div></div>
@@ -136,21 +134,19 @@
       </div>
     </div>
 
-    <!-- CLIENTES -->
     <div class="page" id="page-clientes">
       <div class="row-top">
         <div><div class="page-title">Clientes</div><div class="page-sub">Cadastro de clientes</div></div>
-        <button class="btn-primary"><i class="ti ti-plus"></i> Novo cliente</button>
+        <button class="btn-primary" onclick="window.location.href='novo-cliente.html'"><i class="ti ti-plus"></i> Novo cliente</button>
       </div>
       <div class="table-wrap">
         <table>
-          <tr><th>ID</th><th>Nome</th><th>Cidade</th><th>Telefone</th><th>Fiado</th></tr>
-          <tbody id="listaClientes"><tr><td colspan="5" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr></tbody>
+          <tr><th>ID</th><th>Nome</th><th>Cidade</th><th>Telefone</th><th>Fiado</th><th></th></tr>
+          <tbody id="listaClientes"><tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- FINANCEIRO -->
     <div class="page" id="page-financeiro">
       <div class="row-top">
         <div><div class="page-title">Financeiro</div><div class="page-sub">Contas a pagar e receber</div></div>
@@ -164,21 +160,19 @@
       </div>
     </div>
 
-    <!-- FORNECEDORES -->
     <div class="page" id="page-fornecedores">
       <div class="row-top">
         <div><div class="page-title">Fornecedores</div><div class="page-sub">Gerencie seus fornecedores</div></div>
-        <button class="btn-primary"><i class="ti ti-plus"></i> Novo fornecedor</button>
+        <button class="btn-primary" onclick="window.location.href='novo-fornecedor.html'"><i class="ti ti-plus"></i> Novo fornecedor</button>
       </div>
       <div class="table-wrap">
         <table>
-          <tr><th>Nome</th><th>Categoria</th><th>Telefone</th><th>Status</th></tr>
-          <tbody id="listaFornecedores"><tr><td colspan="4" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr></tbody>
+          <tr><th>Nome</th><th>Categoria</th><th>Telefone</th><th>Status</th><th></th></tr>
+          <tbody id="listaFornecedores"><tr><td colspan="5" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- RELATÓRIOS -->
     <div class="page" id="page-relatorios">
       <div class="page-title">Relatórios</div>
       <div class="page-sub">Gere relatórios em PDF</div>
@@ -197,7 +191,6 @@
   const API = 'http://127.0.0.1:5000'
   const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
 
-  // Preencher dados da empresa
   document.getElementById('nomeEmpresa').textContent = empresa.nome || '—'
   const iniciais = (empresa.nome || '??').split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase()
   document.getElementById('avatarEmpresa').textContent = iniciais
@@ -210,108 +203,117 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
     document.getElementById('page-' + page).classList.add('active')
     el.classList.add('active')
+    carregarDados()
   }
 
   function sair() {
     localStorage.removeItem('empresa')
     window.location.href = 'index.html'
   }
-</script>
-</body>
-</html>
-<script>
-async function carregarDados() {
-  const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
-  if (!empresa.id) return
-  const API = 'http://127.0.0.1:5000'
 
-  // Vendas
-  const rv = await fetch(`${API}/vendas`)
-  const vendas = await rv.json()
-  const vendasEmpresa = vendas.filter(v => v.empresa_id == empresa.id)
+  async function deletarCliente(id, nome) {
+    if (!confirm(`Deletar "${nome}"? Esta ação não pode ser desfeita.`)) return
+    await fetch(`${API}/clientes/${id}`, { method: 'DELETE' })
+    carregarDados()
+  }
 
-  // Últimas vendas no dashboard
-  const tbody = document.getElementById('ultimasVendas')
-  if (vendasEmpresa.length) {
-    tbody.innerHTML = vendasEmpresa.slice(-5).reverse().map(v => `
+  async function carregarDados() {
+    if (!empresa.id) return
+
+    const [rv, rp, rc, rf] = await Promise.all([
+      fetch(`${API}/vendas`),
+      fetch(`${API}/produtos`),
+      fetch(`${API}/clientes`),
+      fetch(`${API}/fornecedores`)
+    ])
+
+    const vendas = await rv.json()
+    const produtos = await rp.json()
+    const clientes = await rc.json()
+    const fornecedores = await rf.json()
+
+    const vendasEmpresa = vendas.filter(v => v.empresa_id == empresa.id)
+    const produtosEmpresa = produtos.filter(p => p.empresa_id == empresa.id)
+    const clientesEmpresa = clientes.filter(c => c.empresa_id == empresa.id)
+    const fornecedoresEmpresa = fornecedores.filter(f => f.empresa_id == empresa.id)
+
+    // Métricas
+    const hoje = new Date().toISOString().split('T')[0]
+    const totalVendas = vendasEmpresa.filter(v => v.data_venda && v.data_venda.startsWith(hoje)).reduce((s, v) => s + v.total, 0)
+    document.getElementById('vendasHoje').textContent = 'R$ ' + totalVendas.toFixed(2)
+    document.getElementById('totalItens').textContent = produtosEmpresa.reduce((s, p) => s + p.quantidade, 0)
+    document.getElementById('totalClientes').textContent = clientesEmpresa.length
+    document.getElementById('totalFiado').textContent = 'R$ ' + clientesEmpresa.reduce((s, c) => s + c.divida_atual, 0).toFixed(2)
+
+    // Últimas vendas
+    const tbody = document.getElementById('ultimasVendas')
+    tbody.innerHTML = vendasEmpresa.length ? vendasEmpresa.slice(-5).reverse().map(v => `
       <tr>
         <td>${v.cliente_id ? '#'+v.cliente_id : '—'}</td>
         <td>R$ ${parseFloat(v.total).toFixed(2)}</td>
         <td><span class="badge ${v.forma_pagamento === 'Pix' ? 'green' : v.forma_pagamento === 'Nota' ? 'amber' : 'blue'}">${v.forma_pagamento}</span></td>
         <td>${v.data_venda ? v.data_venda.substring(0,10) : '—'}</td>
-      </tr>
-    `).join('')
-  }
+      </tr>`).join('') : '<tr><td colspan="4" class="empty"><i class="ti ti-shopping-cart"></i>Nenhuma venda ainda</td></tr>'
 
-  // Lista de vendas na aba vendas
-  const tbodyVendas = document.getElementById('listaVendas')
-  if (vendasEmpresa.length) {
-    tbodyVendas.innerHTML = vendasEmpresa.reverse().map(v => `
+    // Vendas
+    const tbodyVendas = document.getElementById('listaVendas')
+    tbodyVendas.innerHTML = vendasEmpresa.length ? vendasEmpresa.reverse().map(v => `
       <tr>
         <td>${v.data_venda ? v.data_venda.substring(0,10) : '—'}</td>
         <td>${v.cliente_id ? '#'+v.cliente_id : '—'}</td>
         <td>R$ ${parseFloat(v.total).toFixed(2)}</td>
         <td><span class="badge ${v.forma_pagamento === 'Pix' ? 'green' : v.forma_pagamento === 'Nota' ? 'amber' : 'blue'}">${v.forma_pagamento}</span></td>
-      </tr>
-    `).join('')
-  }
+      </tr>`).join('') : '<tr><td colspan="4" class="empty"><i class="ti ti-shopping-cart"></i>Nenhuma venda ainda</td></tr>'
 
-  // Produtos na aba estoque
-  const rp = await fetch(`${API}/produtos`)
-  const produtos = await rp.json()
-  const produtosEmpresa = produtos.filter(p => p.empresa_id == empresa.id)
-  const tbodyEstoque = document.getElementById('listaEstoque')
-  if (produtosEmpresa.length) {
-    tbodyEstoque.innerHTML = produtosEmpresa.map(p => `
+    // Estoque
+    const tbodyEstoque = document.getElementById('listaEstoque')
+    tbodyEstoque.innerHTML = produtosEmpresa.length ? produtosEmpresa.map(p => `
       <tr>
         <td>${p.nome}</td>
         <td>${p.categoria || '—'}</td>
         <td>${p.quantidade}</td>
         <td>R$ ${parseFloat(p.preco_venda).toFixed(2)}</td>
         <td><span class="badge ${p.quantidade === 0 ? 'red' : p.quantidade <= p.quantidade_minima ? 'amber' : 'green'}">${p.quantidade === 0 ? 'Zerado' : p.quantidade <= p.quantidade_minima ? 'Baixo' : 'Normal'}</span></td>
-      </tr>
-    `).join('')
-  }
+        <td><button class="btn-del" onclick="deletarProduto(${p.id}, '${p.nome}')"><i class="ti ti-trash"></i></button></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-box"></i>Nenhum produto cadastrado</td></tr>'
 
-  // Clientes
-  const rc = await fetch(`${API}/clientes`)
-  const clientes = await rc.json()
-  const clientesEmpresa = clientes.filter(c => c.empresa_id == empresa.id)
-  const tbodyClientes = document.getElementById('listaClientes')
-  if (clientesEmpresa.length) {
-    tbodyClientes.innerHTML = clientesEmpresa.map(c => `
+    // Clientes
+    const tbodyClientes = document.getElementById('listaClientes')
+    tbodyClientes.innerHTML = clientesEmpresa.length ? clientesEmpresa.map(c => `
       <tr>
         <td>#${c.id}</td>
         <td>${c.nome}</td>
         <td>${c.cidade || '—'}</td>
         <td>${c.telefone || '—'}</td>
         <td>${c.divida_atual > 0 ? '<span class="badge amber">R$ '+c.divida_atual.toFixed(2)+'</span>' : '—'}</td>
-      </tr>
-    `).join('')
-  }
+        <td><button class="btn-del" onclick="deletarCliente(${c.id}, '${c.nome}')"><i class="ti ti-trash"></i></button></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr>'
 
-  // Métricas
-  const totalVendas = vendasEmpresa.filter(v => v.data_venda && v.data_venda.startsWith(new Date().toISOString().split('T')[0])).reduce((s, v) => s + v.total, 0)
-  document.getElementById('vendasHoje').textContent = 'R$ ' + totalVendas.toFixed(2)
-  document.getElementById('totalItens').textContent = produtosEmpresa.reduce((s, p) => s + p.quantidade, 0)
-  document.getElementById('totalClientes').textContent = clientesEmpresa.length
-  document.getElementById('totalFiado').textContent = 'R$ ' + clientesEmpresa.reduce((s, c) => s + c.divida_atual, 0).toFixed(2)
-
-  // Fornecedores
-  const rf = await fetch(`${API}/fornecedores`)
-  const fornecedores = await rf.json()
-  const fornecedoresEmpresa = fornecedores.filter(f => f.empresa_id == empresa.id)
-  const tbodyFornecedores = document.getElementById('listaFornecedores')
-  if (fornecedoresEmpresa.length) {
-    tbodyFornecedores.innerHTML = fornecedoresEmpresa.map(f => `
+    // Fornecedores
+    const tbodyFornecedores = document.getElementById('listaFornecedores')
+    tbodyFornecedores.innerHTML = fornecedoresEmpresa.length ? fornecedoresEmpresa.map(f => `
       <tr>
         <td>${f.nome}</td>
         <td>${f.categoria || '—'}</td>
         <td>${f.telefone || '—'}</td>
         <td><span class="badge ${f.ativo ? 'green' : 'amber'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
-      </tr>
-    `).join('')
+        <td><button class="btn-del" onclick="deletarFornecedor(${f.id}, '${f.nome}')"><i class="ti ti-trash"></i></button></td>
+      </tr>`).join('') : '<tr><td colspan="5" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr>'
   }
-}
-carregarDados()
+
+  async function deletarProduto(id, nome) {
+    if (!confirm(`Deletar "${nome}"? Esta ação não pode ser desfeita.`)) return
+    await fetch(`${API}/produtos/${id}`, { method: 'DELETE' })
+    carregarDados()
+  }
+
+  async function deletarFornecedor(id, nome) {
+    if (!confirm(`Deletar "${nome}"? Esta ação não pode ser desfeita.`)) return
+    await fetch(`${API}/fornecedores/${id}`, { method: 'DELETE' })
+    carregarDados()
+  }
+
+  carregarDados()
 </script>
+</body>
+</html>

@@ -21,3 +21,11 @@ def criar_clientes():
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Cliente criado com sucesso!'}), 201
+
+@clientes_bp.route('/clientes/<int:id>', methods=['DELETE'])
+def deletar_clientes(id):
+    conn = get_connection()
+    conn.execute('DELETE FROM clientes WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Cliente deletado com sucesso!'}), 200

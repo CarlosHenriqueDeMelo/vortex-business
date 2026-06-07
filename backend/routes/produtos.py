@@ -21,3 +21,11 @@ def criar_produtos():
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Produto cadastrado com sucesso!'}), 201
+
+@produtos_bp.route('/produtos/<int:id>', methods=['DELETE'])
+def deletar_produto(id):
+    conn = get_connection()
+    conn.execute('DELETE FROM produtos WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Produto deletado com sucesso!'}), 200
