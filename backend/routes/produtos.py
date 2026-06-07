@@ -22,6 +22,18 @@ def criar_produtos():
     conn.close()
     return jsonify({'mensagem': 'Produto cadastrado com sucesso!'}), 201
 
+@produtos_bp.route('/produtos/<int:id>', methods=['PUT'])
+def editar_produto(id):
+    dados = request.json
+    conn = get_connection()
+    conn.execute(
+        'UPDATE produtos SET nome = ?, categoria = ?, unidade = ?, preco_custo = ?, preco_venda = ?, quantidade_minima = ? WHERE id = ?',
+        (dados['nome'], dados.get('categoria'), dados.get('unidade'), dados.get('preco_custo'), dados.get('preco_venda'), dados.get('quantidade_minima'), id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Produto atualizado com sucesso!'}), 200
+
 @produtos_bp.route('/produtos/<int:id>', methods=['DELETE'])
 def deletar_produto(id):
     conn = get_connection()
