@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Nova Entrada — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 500px; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .title { font-size: 16px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .title i { color: #534AB7; }
+    .btn-voltar { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #555; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; }
+    .btn-voltar:hover { color: #aaa; border-color: #444; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .label { font-size: 12px; color: #555; }
+    .input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 10px 12px; width: 100%; outline: none; font-family: inherit; }
+    .input:focus { border-color: #534AB7; }
+    select.input { cursor: pointer; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn-primary { width: 100%; background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-primary:hover { background: #3C3489; }
+    .err { font-size: 12px; color: #E24B4A; min-height: 16px; text-align: center; margin-top: 4px; }
+    .success { font-size: 12px; color: #1D9E75; min-height: 16px; text-align: center; margin-top: 4px; }
+    .divider { height: 0.5px; background: #1e1e22; margin: 16px 0; }
+    .autocomplete-wrap { position: relative; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #1a1a1e; border: 0.5px solid #2a2a2e; border-radius: 8px; z-index: 10; max-height: 160px; overflow-y: auto; margin-top: 4px; }
+    .autocomplete-item { padding: 9px 12px; font-size: 12px; color: #aaa; cursor: pointer; }
+    .autocomplete-item:hover { background: #222; color: #fff; }
+    .produto-selecionado { background: #13121f; border: 0.5px solid #2e2860; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #7F77DD; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="title"><i class="ti ti-package"></i> Nova Entrada de Mercadoria</div>
+      <button class="btn-voltar" onclick="window.location.href='dashboard.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+    </div>
+    <div class="divider"></div>
+
+    <div class="field">
+      <div class="label">Produto *</div>
+      <div class="autocomplete-wrap">
+        <input class="input" type="text" id="produtoInput" placeholder="Digite o nome do produto..." oninput="buscarProduto(this.value)" autocomplete="off"/>
+        <div class="autocomplete-list" id="produtoList" style="display:none"></div>
+      </div>
+      <div class="produto-selecionado" id="produtoSelecionado"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <div class="label">Quantidade recebida *</div>
+        <input class="input" type="number" id="quantidade" value="1" min="1"/>
+      </div>
+      <div class="field">
+        <div class="label">Preço de custo (R$) *</div>
+        <input class="input" type="number" id="preco_custo" step="0.01" placeholder="0,00"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label">Fornecedor</div>
+      <select class="input" id="fornecedor_id">
+        <option value="">Selecione o fornecedor</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="label">Forma de pagamento</div>
+      <select class="input" id="forma_pagamento">
+        <option value="">Selecione</option>
+        <option>Pix</option>
+        <option>Dinheiro</option>
+        <option>Boleto</option>
+        <option>Cartão</option>
+        <option>A prazo</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <div class="label">Observação</div>
+      <input class="input" type="text" id="observacao" placeholder="Opcional..."/>
+    </div>
+
+    <div class="err" id="errMsg"></div>
+    <div class="success" id="successMsg"></div>
+
+    <button class="btn-primary" onclick="registrar()"><i class="ti ti-check"></i> Registrar entrada</button>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:5000'
+    const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
+    let produtoSelecionadoId = null
+    let todosProdutos = []
+
+    async function init() {
+      const [rp, rf] = await Promise.all([
+        fetch(`${API}/produtos`),
+        fetch(`${API}/fornecedores`)
+      ])
+      todosProdutos = await rp.json()
+      const fornecedores = await rf.json()
+      const sel = document.getElementById('fornecedor_id')
+      fornecedores.filter(f => f.empresa_id == empresa.id).forEach(f => {
+        const opt = document.createElement('option')
+        opt.value = f.id
+        opt.textContent = f.nome
+        sel.appendChild(opt)
+      })
+    }
+    init()
+
+    function buscarProduto(val) {
+      const list = document.getElementById('produtoList')
+      if (!val) { list.style.display = 'none'; return; }
+      const filtrados = todosProdutos.filter(p =>
+        p.empresa_id == empresa.id &&
+        p.nome.toLowerCase().includes(val.toLowerCase())
+      )
+      if (!filtrados.length) { list.style.display = 'none'; return; }
+      list.innerHTML = filtrados.map(p => `
+        <div class="autocomplete-item" onclick="selecionarProduto(${p.id})">
+          <strong>${p.nome}</strong> — ${p.quantidade} em estoque — R$ ${p.preco_custo.toFixed(2)} custo
+        </div>
+      `).join('')
+      list.style.display = 'block'
+    }
+
+    function selecionarProduto(id) {
+      const p = todosProdutos.find(x => x.id === id)
+      produtoSelecionadoId = id
+      document.getElementById('produtoInput').value = p.nome
+      document.getElementById('produtoList').style.display = 'none'
+      document.getElementById('preco_custo').value = p.preco_custo.toFixed(2)
+      const el = document.getElementById('produtoSelecionado')
+      el.textContent = `Estoque atual: ${p.quantidade} ${p.unidade}`
+      el.style.display = 'block'
+    }
+
+    async function registrar() {
+      document.getElementById('errMsg').textContent = ''
+      document.getElementById('successMsg').textContent = ''
+      if (!produtoSelecionadoId) { document.getElementById('errMsg').textContent = 'Selecione um produto.'; return; }
+      const quantidade = parseInt(document.getElementById('quantidade').value)
+      const preco_custo = parseFloat(document.getElementById('preco_custo').value)
+      if (!quantidade || !preco_custo) { document.getElementById('errMsg').textContent = 'Preencha quantidade e preço.'; return; }
+      try {
+        const res = await fetch(`${API}/entradas`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            empresa_id: empresa.id,
+            produto_id: produtoSelecionadoId,
+            fornecedor_id: document.getElementById('fornecedor_id').value || null,
+            quantidade,
+            preco_custo,
+            forma_pagamento: document.getElementById('forma_pagamento').value,
+            observacao: document.getElementById('observacao').value
+          })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          document.getElementById('successMsg').textContent = 'Entrada registrada! Estoque atualizado.'
+          setTimeout(() => window.location.href = 'dashboard.html', 1500)
+        } else {
+          document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao registrar.'
+        }
+      } catch(e) {
+        document.getElementById('errMsg').textContent = 'Erro ao conectar ao servidor.'
+      }
+    }
+  </script>
+</body>
+</html>
