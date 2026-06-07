@@ -129,12 +129,22 @@
       ctx.restore()
       const dataUrl = canvas.toDataURL('image/png')
       localStorage.setItem('croppedLogo', dataUrl)
-      window.history.back()
+      const origin = localStorage.getItem('cropOrigin') || 'cadastro-empresa'
+      if (origin === 'gerenciar') {
+        window.location.href = 'gerenciar-empresa.html'
+      } else {
+        window.location.href = 'cadastro-empresa.html'
+      }
     }
 
     function cancelar() {
       localStorage.removeItem('cropSrc')
-      window.history.back()
+      const origin = localStorage.getItem('cropOrigin') || 'cadastro-empresa'
+      if (origin === 'gerenciar') {
+        window.location.href = 'gerenciar-empresa.html'
+      } else {
+        window.location.href = 'cadastro-empresa.html'
+      }
     }
   </script>
 </body>
