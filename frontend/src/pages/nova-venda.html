@@ -144,6 +144,10 @@
           <button class="pag-btn" onclick="setPagamento('Dinheiro', this)">Dinheiro</button>
         </div>
       </div>
+      <div class="field" style="margin-top:12px" id="prazoCampo" style="display:none">
+        <div class="label">Prazo para pagamento (dias)</div>
+        <input class="input" type="number" id="diasPrazo" value="30" min="1" placeholder="Ex: 30"/>
+      </div>
       <div class="field" style="margin-top:12px">
         <div class="label">Observação</div>
         <input class="input" type="text" id="observacao" placeholder="Opcional..."/>
@@ -321,6 +325,7 @@
       cidade: document.getElementById('cidade').value,
       telefone: document.getElementById('telefone').value,
       observacao: document.getElementById('observacao').value,
+      dias_prazo: formaPagamento === 'Nota' ? parseInt(document.getElementById('diasPrazo').value) || 30 : null,
       itens: carrinho
     }
     try {

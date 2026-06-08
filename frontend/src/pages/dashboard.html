@@ -93,6 +93,7 @@
     <div class="page active" id="page-dashboard">
       <div class="page-title" id="saudacao">Olá!</div>
       <div class="page-sub" id="dataHoje"></div>
+      <div id="alertasFiado" style="margin-bottom:12px"></div>
       <div class="metrics">
         <div class="metric"><div class="metric-label">Vendas hoje</div><div class="metric-value green" id="vendasHoje">R$ 0,00</div></div>
         <div class="metric"><div class="metric-label">Itens no estoque</div><div class="metric-value" id="totalItens">0</div></div>
@@ -191,6 +192,31 @@
   const API = 'http://127.0.0.1:5000'
   const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
 
+  async function verificarFiados() {
+    const res = await fetch(`${API}/financeiro`)
+    const lancamentos = await res.json()
+    const hoje = new Date().toISOString().split('T')[0]
+    const fiados = lancamentos.filter(f =>
+      f.empresa_id == empresa.id &&
+      f.tipo === 'receber' &&
+      f.status === 'pendente'
+    )
+    const vencidos = fiados.filter(f => f.vencimento && f.vencimento < hoje)
+    const venceHoje = fiados.filter(f => f.vencimento === hoje)
+    const venceEm3 = fiados.filter(f => {
+      if (!f.vencimento) return false
+      const diff = (new Date(f.vencimento) - new Date(hoje)) / (1000 * 60 * 60 * 24)
+      return diff > 0 && diff <= 3
+    })
+    const alertas = document.getElementById('alertasFiado')
+    if (!alertas) return
+    let html = ''
+    if (vencidos.length) html += `<div style="background:#2e0d0d;border:0.5px solid #E24B4A;border-radius:8px;padding:12px;margin-bottom:8px;font-size:13px;color:#E24B4A"><i class="ti ti-alert-triangle"></i> <strong>${vencidos.length} fiado(s) vencido(s)</strong> — clientes com prazo expirado</div>`
+    if (venceHoje.length) html += `<div style="background:#2e1e00;border:0.5px solid #EF9F27;border-radius:8px;padding:12px;margin-bottom:8px;font-size:13px;color:#EF9F27"><i class="ti ti-clock"></i> <strong>${venceHoje.length} fiado(s) vencem hoje</strong></div>`
+    if (venceEm3.length) html += `<div style="background:#1a1a2e;border:0.5px solid #534AB7;border-radius:8px;padding:12px;margin-bottom:8px;font-size:13px;color:#7F77DD"><i class="ti ti-bell"></i> <strong>${venceEm3.length} fiado(s) vencem em até 3 dias</strong></div>`
+    alertas.innerHTML = html
+  }
+
   document.getElementById('nomeEmpresa').textContent = empresa.nome || '—'
   const iniciais = (empresa.nome || '??').split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase()
   document.getElementById('avatarEmpresa').textContent = iniciais
@@ -204,11 +230,23 @@
     document.getElementById('page-' + page).classList.add('active')
     el.classList.add('active')
     carregarDados()
+  verificarFiados()
   }
 
   function sair() {
     localStorage.removeItem('empresa')
     window.location.href = 'index.html'
+  }
+
+  async function pagarFiado(id, nome, valor) {
+    if (!confirm(`Marcar o fiado de "${nome}" (R$ ${valor.toFixed(2)}) como pago?`)) return
+    await fetch(`${API}/clientes/${id}/pagar-fiado`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valor })
+    })
+    carregarDados()
+    verificarFiados()
   }
 
   async function deletarCliente(id, nome) {
@@ -286,7 +324,10 @@
         <td>${c.cidade || '—'}</td>
         <td>${c.telefone || '—'}</td>
         <td>${c.divida_atual > 0 ? '<span class="badge amber">R$ '+c.divida_atual.toFixed(2)+'</span>' : '—'}</td>
-        <td><button class="btn-del" onclick="deletarCliente(${c.id}, '${c.nome}')"><i class="ti ti-trash"></i></button></td>
+        <td style="display:flex;gap:6px">
+          ${c.divida_atual > 0 ? `<button onclick="pagarFiado(${c.id}, '${c.nome}', ${c.divida_atual})" style="background:transparent;border:none;color:#1D9E75;cursor:pointer;font-size:16px" title="Marcar fiado como pago"><i class="ti ti-check"></i></button>` : ''}
+          <button class="btn-del" onclick="deletarCliente(${c.id}, '${c.nome}')"><i class="ti ti-trash"></i></button>
+        </td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr>'
 
     // Fornecedores

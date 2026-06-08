@@ -30,6 +30,16 @@ def criar_venda():
             'UPDATE produtos SET quantidade = quantidade - ? WHERE id = ?',
             (item['quantidade'], item['produto_id'])
         )
+    if dados['forma_pagamento'] == 'Nota' and dados.get('cliente_id'):
+        conn.execute(
+            'UPDATE clientes SET divida_atual = divida_atual + ? WHERE id = ?',
+            (dados['total'], dados['cliente_id'])
+        )
+        if dados.get('dias_prazo'):
+            conn.execute(
+                "INSERT INTO financeiro (empresa_id, cliente_id, descricao, tipo, valor, vencimento, status) VALUES (?, ?, ?, 'receber', ?, date('now', '+' || ? || ' days'), 'pendente')",
+                (dados['empresa_id'], dados['cliente_id'], f"Fiado venda #{venda_id}", dados['total'], dados['dias_prazo'])
+            )
     conn.commit()
     venda = dict(conn.execute('SELECT * FROM vendas WHERE id = ?', (venda_id,)).fetchone())
     empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (dados['empresa_id'],)).fetchone())
@@ -41,3 +51,19 @@ def criar_venda():
     conn.close()
     pdf_path = gerar_pdf_venda(venda, itens, empresa, cliente)
     return jsonify({'mensagem': 'Venda registrada com sucesso!', 'venda_id': venda_id, 'pdf': pdf_path}), 201
+
+@vendas_bp.route('/clientes/<int:id>/pagar-fiado', methods=['POST'])
+def pagar_fiado(id):
+    dados = request.json
+    conn = get_connection()
+    conn.execute(
+        'UPDATE clientes SET divida_atual = divida_atual - ? WHERE id = ?',
+        (dados['valor'], id)
+    )
+    conn.execute(
+        "UPDATE financeiro SET status = 'pago' WHERE cliente_id = ? AND status = 'pendente'",
+        (id,)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Fiado marcado como pago!'}), 200

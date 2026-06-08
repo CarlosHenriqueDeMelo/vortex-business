@@ -41,7 +41,7 @@
   <div class="card">
     <div class="header">
       <div class="title"><i class="ti ti-settings"></i> Configurações da Empresa</div>
-      <button class="btn-voltar" onclick="window.location.href='index.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+      <button class="btn-voltar" onclick="sair()"><i class="ti ti-arrow-left"></i> Voltar</button>
     </div>
 
     <div class="auth-overlay" id="authOverlay">
@@ -213,6 +213,10 @@
       } else {
         document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao salvar.'
       }
+    }
+    function sair() {
+      localStorage.removeItem('gerenciarEmpresa')
+      window.location.href = 'index.html'
     }
   </script>
 </body>

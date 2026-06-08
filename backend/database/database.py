@@ -139,6 +139,8 @@ def inicializar_banco():
             FOREIGN KEY (cliente_id) REFERENCES clientes(id)
         )
     ''')
+    
+    
 
     conn.commit()
     conn.close()

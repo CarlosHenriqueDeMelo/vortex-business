@@ -12,17 +12,17 @@ def gerar_pdf_venda(venda, itens, empresa, cliente=None):
     largura, altura = A4
 
     logo_path = empresa.get('foto_path')
-    if logo_path and os.path.exists(str(logo_path)):
-        c.drawImage(logo_path, 50, altura - 80, width=60, height=60, preserveAspectRatio=True)
-        c.setFont("Helvetica-Bold", 20)
-        c.drawString(120, altura - 50, "Vortex Business")
-        c.setFont("Helvetica", 11)
-        c.drawString(120, altura - 65, empresa['nome'])
+    if logo_path:
+        logo_path = os.path.normpath(logo_path)
+    if logo_path and os.path.exists(logo_path):
+        c.drawImage(logo_path, 50, altura - 85, width=70, height=70, preserveAspectRatio=True, mask='auto')
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(130, altura - 50, empresa['nome'])
+
     else:
         c.setFont("Helvetica-Bold", 22)
-        c.drawString(50, altura - 50, "Vortex Business")
-        c.setFont("Helvetica", 12)
-        c.drawString(50, altura - 68, f"Empresa: {empresa['nome']}")
+        c.drawString(50, altura - 50, empresa['nome'])
+
 
     c.setFont("Helvetica", 10)
     c.drawRightString(largura - 50, altura - 50, f"Venda #{venda['id']}")
