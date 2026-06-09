@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Gerenciar Fiado — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; min-height: 100vh; padding: 24px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .title { font-size: 18px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .title i { color: #534AB7; }
+    .btn-voltar { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 8px 16px; font-size: 13px; color: #555; cursor: pointer; font-family: inherit; }
+    .btn-voltar:hover { color: #aaa; }
+    .cliente-info { background: #161618; border: 0.5px solid #1e1e22; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .cliente-nome { font-size: 16px; font-weight: 500; color: #fff; }
+    .cliente-detalhe { font-size: 12px; color: #555; margin-top: 4px; }
+    .divida-total { font-size: 20px; font-weight: 500; color: #EF9F27; }
+    .venda-card { background: #161618; border: 0.5px solid #1e1e22; border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; }
+    .venda-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .venda-info { font-size: 12px; color: #555; }
+    .venda-total { font-size: 14px; font-weight: 500; color: #EF9F27; }
+    .item-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 0.5px solid #1e1e22; }
+    .item-row:last-child { border-bottom: none; }
+    .item-check { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid #2a2a2e; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.12s; }
+    .item-check.checked { background: #1D9E75; border-color: #1D9E75; }
+    .item-nome { flex: 1; font-size: 13px; color: #ccc; }
+    .item-qtd { font-size: 12px; color: #555; }
+    .item-valor { font-size: 13px; color: #aaa; }
+    .item-row.pago .item-nome { text-decoration: line-through; color: #444; }
+    .item-row.pago .item-valor { color: #1D9E75; }
+    .vencimento { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+    .vencimento.vencido { background: #2e0d0d; color: #E24B4A; }
+    .vencimento.hoje { background: #2e1e00; color: #EF9F27; }
+    .vencimento.ok { background: #0d2e1a; color: #1D9E75; }
+    .btn-pagar { background: #1D9E75; color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .btn-pagar:hover { background: #157a5c; }
+    .btn-pdf { background: transparent; color: #534AB7; border: 0.5px solid #2e2860; border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .actions { display: flex; gap: 10px; margin-top: 16px; }
+    .empty { text-align: center; padding: 40px; color: #333; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title"><i class="ti ti-cash"></i> Gerenciar Fiado</div>
+  <button class="btn-voltar" onclick="window.location.href='dashboard.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+</div>
+
+<div class="cliente-info" id="clienteInfo">
+  <div>
+    <div class="cliente-nome" id="clienteNome">—</div>
+    <div class="cliente-detalhe" id="clienteDetalhe">—</div>
+  </div>
+  <div>
+    <div style="font-size:11px;color:#555;margin-bottom:4px">Total em aberto</div>
+    <div class="divida-total" id="dividaTotal">R$ 0,00</div>
+  </div>
+</div>
+
+<div id="fiadosList"></div>
+
+<script>
+  const API = 'http://127.0.0.1:5000'
+  const params = new URLSearchParams(window.location.search)
+  const clienteId = params.get('id')
+  const empresaId = params.get('empresa_id')
+  let dadosCliente = null
+  let dadosFiados = []
+
+  async function init() {
+    const res = await fetch(`${API}/clientes/${clienteId}/relatorio`)
+    const data = await res.json()
+    dadosCliente = data.cliente
+    dadosFiados = data.fiados
+
+    document.getElementById('clienteNome').textContent = dadosCliente.nome
+    document.getElementById('clienteDetalhe').textContent = `${dadosCliente.cidade || '—'} · Tel: ${dadosCliente.telefone || '—'} · ID: #${dadosCliente.id}`
+    document.getElementById('dividaTotal').textContent = `R$ ${dadosCliente.divida_atual.toFixed(2)}`
+
+    renderFiados()
+  }
+
+  function renderFiados() {
+    const container = document.getElementById('fiadosList')
+    if (!dadosFiados.length) {
+      container.innerHTML = '<div class="empty"><i class="ti ti-check" style="font-size:36px;display:block;margin-bottom:8px"></i>Nenhum fiado em aberto</div>'
+      return
+    }
+
+    const hoje = new Date().toISOString().split('T')[0]
+    container.innerHTML = dadosFiados.map(f => {
+      const venc = f.vencimento
+      let vencClass = 'ok', vencText = venc || 'Sem prazo'
+      if (venc) {
+        if (venc < hoje) { vencClass = 'vencido'; vencText = `Vencido em ${venc}` }
+        else if (venc === hoje) { vencClass = 'hoje'; vencText = 'Vence hoje!' }
+        else { vencText = `Vence em ${venc}` }
+      }
+
+      const itensHtml = f.itens && f.itens.length ? f.itens.map(item => `
+        <div class="item-row" id="item-${f.id}-${item.id}">
+          <div class="item-check" id="check-${f.id}-${item.id}" onclick="toggleItem(${f.id}, ${item.id}, ${item.subtotal})">
+            <i class="ti ti-check" style="font-size:12px;display:none" id="checkicon-${f.id}-${item.id}"></i>
+          </div>
+          <div class="item-nome">${item.produto_nome}</div>
+          <div class="item-qtd">x${item.quantidade}</div>
+          <div class="item-valor">R$ ${item.subtotal.toFixed(2)}</div>
+        </div>
+      `).join('') : `<div class="item-row"><div class="item-nome">${f.descricao}</div><div class="item-valor">R$ ${f.valor.toFixed(2)}</div></div>`
+
+      return `
+        <div class="venda-card">
+          <div class="venda-header">
+            <div>
+              <div class="venda-info">Data: ${f.data_venda ? f.data_venda.substring(0,10) : '—'}</div>
+              <span class="vencimento ${vencClass}">${vencText}</span>
+            </div>
+            <div class="venda-total">R$ ${f.valor.toFixed(2)}</div>
+          </div>
+          ${itensHtml}
+          <div class="actions">
+            <button class="btn-pagar" onclick="pagarFiado(${f.id}, ${f.valor})"><i class="ti ti-check"></i> Marcar tudo como pago</button>
+          </div>
+        </div>
+      `
+    }).join('')
+  }
+
+  let itensSelecionados = {}
+
+  function toggleItem(fiadoId, itemId, valor) {
+    const key = `${fiadoId}-${itemId}`
+    const check = document.getElementById(`check-${key}`)
+    const icon = document.getElementById(`checkicon-${key}`)
+    const row = document.getElementById(`item-${key}`)
+    if (itensSelecionados[key]) {
+      delete itensSelecionados[key]
+      check.classList.remove('checked')
+      icon.style.display = 'none'
+      row.classList.remove('pago')
+    } else {
+      itensSelecionados[key] = valor
+      check.classList.add('checked')
+      icon.style.display = 'block'
+      row.classList.add('pago')
+    }
+  }
+
+  async function pagarFiado(fiadoId, valor) {
+    if (!confirm(`Marcar este fiado de R$ ${valor.toFixed(2)} como pago?`)) return
+    await fetch(`${API}/financeiro/${fiadoId}/pagar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cliente_id: clienteId, valor })
+    })
+    await init()
+  }
+
+  init()
+</script>
+</body>
+</html>

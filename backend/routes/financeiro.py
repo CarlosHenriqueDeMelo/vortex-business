@@ -21,3 +21,18 @@ def criar_financeiro():
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Lançamento criado com sucesso!'}), 201
+
+@financeiro_bp.route('/financeiro/<int:id>/pagar', methods=['POST'])
+def pagar_lancamento(id):
+    dados = request.json
+    conn = get_connection()
+    lancamento = dict(conn.execute('SELECT * FROM financeiro WHERE id = ?', (id,)).fetchone())
+    conn.execute("UPDATE financeiro SET status = 'pago' WHERE id = ?", (id,))
+    if dados.get('cliente_id') and lancamento.get('valor'):
+        conn.execute(
+            'UPDATE clientes SET divida_atual = MAX(0, divida_atual - ?) WHERE id = ?',
+            (lancamento['valor'], dados['cliente_id'])
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Fiado pago com sucesso!'}), 200

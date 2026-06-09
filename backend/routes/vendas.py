@@ -35,11 +35,11 @@ def criar_venda():
             'UPDATE clientes SET divida_atual = divida_atual + ? WHERE id = ?',
             (dados['total'], dados['cliente_id'])
         )
-        if dados.get('dias_prazo'):
-            conn.execute(
-                "INSERT INTO financeiro (empresa_id, cliente_id, descricao, tipo, valor, vencimento, status) VALUES (?, ?, ?, 'receber', ?, date('now', '+' || ? || ' days'), 'pendente')",
-                (dados['empresa_id'], dados['cliente_id'], f"Fiado venda #{venda_id}", dados['total'], dados['dias_prazo'])
-            )
+        dias = dados.get('dias_prazo') or 30
+        conn.execute(
+            "INSERT INTO financeiro (empresa_id, cliente_id, venda_id, descricao, tipo, valor, vencimento, status) VALUES (?, ?, ?, ?, 'receber', ?, date('now', '+' || ? || ' days'), 'pendente')",
+            (dados['empresa_id'], dados['cliente_id'], venda_id, f"Fiado venda #{venda_id}", dados['total'], dias)
+        )
     conn.commit()
     venda = dict(conn.execute('SELECT * FROM vendas WHERE id = ?', (venda_id,)).fetchone())
     empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (dados['empresa_id'],)).fetchone())

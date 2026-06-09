@@ -238,6 +238,15 @@
     window.location.href = 'index.html'
   }
 
+  async function pdfCliente(id) {
+    const res = await fetch(`${API}/clientes/${id}/pdf?empresa_id=${empresa.id}`)
+    const data = await res.json()
+    if (data.pdf) {
+      const { shell } = require('electron')
+      shell.openPath(data.pdf)
+    }
+  }
+
   async function pagarFiado(id, nome, valor) {
     if (!confirm(`Marcar o fiado de "${nome}" (R$ ${valor.toFixed(2)}) como pago?`)) return
     await fetch(`${API}/clientes/${id}/pagar-fiado`, {
@@ -325,7 +334,8 @@
         <td>${c.telefone || '—'}</td>
         <td>${c.divida_atual > 0 ? '<span class="badge amber">R$ '+c.divida_atual.toFixed(2)+'</span>' : '—'}</td>
         <td style="display:flex;gap:6px">
-          ${c.divida_atual > 0 ? `<button onclick="pagarFiado(${c.id}, '${c.nome}', ${c.divida_atual})" style="background:transparent;border:none;color:#1D9E75;cursor:pointer;font-size:16px" title="Marcar fiado como pago"><i class="ti ti-check"></i></button>` : ''}
+          ${c.divida_atual > 0 ? `<button onclick="window.location.href='gerenciar-fiado.html?id=${c.id}&empresa_id=${empresa.id}'" style="background:transparent;border:none;color:#1D9E75;cursor:pointer;font-size:16px" title="Gerenciar fiado"><i class="ti ti-cash"></i></button>` : ''}
+          ${c.divida_atual > 0 ? `<button onclick="pdfCliente(${c.id})" style="background:transparent;border:none;color:#534AB7;cursor:pointer;font-size:16px" title="Gerar PDF do fiado"><i class="ti ti-file-text"></i></button>` : ''}
           <button class="btn-del" onclick="deletarCliente(${c.id}, '${c.nome}')"><i class="ti ti-trash"></i></button>
         </td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr>'
