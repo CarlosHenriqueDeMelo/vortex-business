@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Novo Lançamento — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 460px; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .title { font-size: 16px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .title i { color: #534AB7; }
+    .btn-voltar { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #555; cursor: pointer; font-family: inherit; }
+    .btn-voltar:hover { color: #aaa; border-color: #444; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .label { font-size: 12px; color: #555; }
+    .input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 10px 12px; width: 100%; outline: none; font-family: inherit; }
+    .input:focus { border-color: #534AB7; }
+    select.input { cursor: pointer; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tipo-opts { display: flex; gap: 8px; }
+    .tipo-btn { flex: 1; background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 10px; font-size: 13px; cursor: pointer; font-family: inherit; color: #555; text-align: center; transition: all 0.12s; }
+    .tipo-btn.pagar.active { background: #2e0d0d; border-color: #E24B4A; color: #E24B4A; }
+    .tipo-btn.receber.active { background: #0d2e1a; border-color: #1D9E75; color: #1D9E75; }
+    .btn-primary { width: 100%; background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-primary:hover { background: #3C3489; }
+    .err { font-size: 12px; color: #E24B4A; min-height: 16px; text-align: center; margin-top: 4px; }
+    .success { font-size: 12px; color: #1D9E75; min-height: 16px; text-align: center; margin-top: 4px; }
+    .divider { height: 0.5px; background: #1e1e22; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="title"><i class="ti ti-cash"></i> Novo Lançamento</div>
+      <button class="btn-voltar" onclick="window.location.href='dashboard.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+    </div>
+    <div class="divider"></div>
+
+    <div class="field">
+      <div class="label">Tipo *</div>
+      <div class="tipo-opts">
+        <div class="tipo-btn pagar" id="btnPagar" onclick="setTipo('pagar')"><i class="ti ti-arrow-up"></i> A Pagar</div>
+        <div class="tipo-btn receber" id="btnReceber" onclick="setTipo('receber')"><i class="ti ti-arrow-down"></i> A Receber</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label">Descrição *</div>
+      <input class="input" type="text" id="descricao" placeholder="Ex: Aluguel, Fornecedor ABC..."/>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <div class="label">Valor (R$) *</div>
+        <input class="input" type="number" id="valor" step="0.01" placeholder="0,00"/>
+      </div>
+      <div class="field">
+        <div class="label">Vencimento</div>
+        <input class="input" type="date" id="vencimento"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="label">Status</div>
+      <select class="input" id="status">
+        <option value="pendente">Pendente</option>
+        <option value="pago">Pago</option>
+        <option value="agendado">Agendado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+
+    <div class="err" id="errMsg"></div>
+    <div class="success" id="successMsg"></div>
+
+    <button class="btn-primary" onclick="cadastrar()"><i class="ti ti-check"></i> Salvar lançamento</button>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:5000'
+    const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
+    let tipo = null
+
+    const hoje = new Date().toISOString().split('T')[0]
+    document.getElementById('vencimento').value = hoje
+
+    function setTipo(t) {
+      tipo = t
+      document.getElementById('btnPagar').classList.toggle('active', t === 'pagar')
+      document.getElementById('btnReceber').classList.toggle('active', t === 'receber')
+    }
+
+    async function cadastrar() {
+      const descricao = document.getElementById('descricao').value.trim()
+      const valor = parseFloat(document.getElementById('valor').value)
+      const vencimento = document.getElementById('vencimento').value
+      const status = document.getElementById('status').value
+
+      document.getElementById('errMsg').textContent = ''
+      document.getElementById('successMsg').textContent = ''
+
+      if (!tipo) { document.getElementById('errMsg').textContent = 'Selecione o tipo.'; return; }
+      if (!descricao) { document.getElementById('errMsg').textContent = 'Descrição é obrigatória.'; return; }
+      if (!valor || valor <= 0) { document.getElementById('errMsg').textContent = 'Valor inválido.'; return; }
+
+      try {
+        const res = await fetch(`${API}/financeiro`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ empresa_id: empresa.id, descricao, tipo, valor, vencimento, status })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          document.getElementById('successMsg').textContent = 'Lançamento salvo com sucesso!'
+          setTimeout(() => window.location.href = 'dashboard.html', 1500)
+        } else {
+          document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao salvar.'
+        }
+      } catch(e) {
+        document.getElementById('errMsg').textContent = 'Erro ao conectar ao servidor.'
+      }
+    }
+  </script>
+</body>
+</html>

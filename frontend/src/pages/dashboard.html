@@ -151,7 +151,7 @@
     <div class="page" id="page-financeiro">
       <div class="row-top">
         <div><div class="page-title">Financeiro</div><div class="page-sub">Contas a pagar e receber</div></div>
-        <button class="btn-primary"><i class="ti ti-plus"></i> Novo lançamento</button>
+        <button class="btn-primary" onclick="window.location.href='novo-lancamento.html'"><i class="ti ti-plus"></i> Novo lançamento</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -341,6 +341,19 @@
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr>'
 
     // Fornecedores
+    const resF = await fetch(`${API}/financeiro`)
+    const financeiro = await resF.json()
+    const financeiroEmpresa = financeiro.filter(f => f.empresa_id == empresa.id)
+    const tbodyFinanceiro = document.getElementById('listaFinanceiro')
+    tbodyFinanceiro.innerHTML = financeiroEmpresa.length ? financeiroEmpresa.reverse().map(f => `
+      <tr>
+        <td>${f.descricao}</td>
+        <td>${f.vencimento || '—'}</td>
+        <td>R$ ${parseFloat(f.valor).toFixed(2)}</td>
+        <td><span class="badge ${f.tipo === 'pagar' ? 'red' : 'green'}">${f.tipo === 'pagar' ? 'Pagar' : 'Receber'}</span></td>
+        <td><span class="badge ${f.status === 'pago' ? 'green' : f.status === 'cancelado' ? 'red' : 'amber'}">${f.status}</span></td>
+      </tr>`).join('') : '<tr><td colspan="5" class="empty"><i class="ti ti-cash"></i>Nenhum lançamento ainda</td></tr>'
+
     const tbodyFornecedores = document.getElementById('listaFornecedores')
     tbodyFornecedores.innerHTML = fornecedoresEmpresa.length ? fornecedoresEmpresa.map(f => `
       <tr>
