@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session } = require('electron')
+const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
 function createWindow() {
@@ -16,12 +16,9 @@ function createWindow() {
   })
 
   win.loadFile(path.join(__dirname, 'src/pages/index.html'))
-  win.webContents.openDevTools()
 }
 
-app.whenReady().then(() => {
-  createWindow()
-})
+app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

@@ -51,6 +51,18 @@
     .badge.purple { background: #1a1040; color: #7F77DD; }
     .btn-primary { background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: 12px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
     .btn-primary:hover { background: #3C3489; }
+    .periodo-btn { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 6px; padding: 5px 12px; font-size: 11px; color: #555; cursor: pointer; font-family: inherit; transition: all 0.12s; }
+    .periodo-btn:hover { color: #aaa; border-color: #444; }
+    .periodo-btn.active { background: #1a1040; border-color: #534AB7; color: #7F77DD; }
+    .input-date { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 6px; color: #fff; font-size: 12px; padding: 5px 10px; outline: none; font-family: inherit; }
+    .input-date:focus { border-color: #534AB7; }
+    .metric-value.red { color: #E24B4A; }
+    .periodo-btn { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 6px; padding: 5px 12px; font-size: 11px; color: #555; cursor: pointer; font-family: inherit; transition: all 0.12s; }
+    .periodo-btn:hover { color: #aaa; border-color: #444; }
+    .periodo-btn.active { background: #1a1040; border-color: #534AB7; color: #7F77DD; }
+    .input-date { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 6px; color: #fff; font-size: 12px; padding: 5px 10px; outline: none; font-family: inherit; }
+    .input-date:focus { border-color: #534AB7; }
+    .metric-value.red { color: #E24B4A; }
     .empty { text-align: center; padding: 40px; color: #333; font-size: 13px; }
     .empty i { font-size: 36px; margin-bottom: 12px; display: block; }
     .btn-del { background: transparent; border: none; color: #E24B4A; cursor: pointer; font-size: 16px; padding: 2px 6px; }
@@ -94,10 +106,31 @@
       <div class="page-title" id="saudacao">Olá!</div>
       <div class="page-sub" id="dataHoje"></div>
       <div id="alertasFiado" style="margin-bottom:12px"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="section-title">Resumo financeiro</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="periodo-btn active" onclick="setPeriodo('hoje',this)">Hoje</button>
+          <button class="periodo-btn" onclick="setPeriodo('semana',this)">Semana</button>
+          <button class="periodo-btn" onclick="setPeriodo('mes',this)">Mês</button>
+          <button class="periodo-btn" onclick="setPeriodo('personalizado',this)">Personalizado</button>
+        </div>
+      </div>
+      <div id="periodoCustom" style="display:none;margin-bottom:12px;display:none;gap:10px;align-items:center">
+        <input type="date" id="dataInicio" class="input-date"/>
+        <span style="color:#555">até</span>
+        <input type="date" id="dataFim" class="input-date"/>
+        <button class="periodo-btn active" onclick="carregarDados()">Filtrar</button>
+      </div>
+
       <div class="metrics">
-        <div class="metric"><div class="metric-label">Vendas hoje</div><div class="metric-value green" id="vendasHoje">R$ 0,00</div></div>
-        <div class="metric"><div class="metric-label">Itens no estoque</div><div class="metric-value" id="totalItens">0</div></div>
+        <div class="metric"><div class="metric-label">Faturamento</div><div class="metric-value green" id="vendasHoje">R$ 0,00</div></div>
+        <div class="metric"><div class="metric-label">Saídas do caixa</div><div class="metric-value red" id="saidasCaixa">R$ 0,00</div></div>
+        <div class="metric"><div class="metric-label">Lucro líquido</div><div class="metric-value" id="lucroLiquido">R$ 0,00</div></div>
         <div class="metric"><div class="metric-label">Fiado em aberto</div><div class="metric-value amber" id="totalFiado">R$ 0,00</div></div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Itens no estoque</div><div class="metric-value" id="totalItens">0</div></div>
         <div class="metric"><div class="metric-label">Clientes</div><div class="metric-value" id="totalClientes">0</div></div>
       </div>
       <div class="section-title" style="margin-bottom:12px">Últimas vendas</div>
@@ -189,8 +222,45 @@
 </div>
 
 <script>
+  if (!localStorage.getItem("empresa")) { window.location.replace("index.html"); }
   const API = 'http://127.0.0.1:5000'
   const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
+  let periodoAtual = 'hoje'
+
+  function setPeriodo(p, btn) {
+    periodoAtual = p
+    document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    const customDiv = document.getElementById('periodoCustom')
+    if (p === 'personalizado') {
+      customDiv.style.display = 'flex'
+    } else {
+      customDiv.style.display = 'none'
+      carregarDados()
+    }
+  }
+
+  function getDateRange() {
+    const hoje = new Date()
+    const hojeStr = hoje.toISOString().split('T')[0]
+    if (periodoAtual === 'hoje') return { inicio: hojeStr, fim: hojeStr }
+    if (periodoAtual === 'semana') {
+      const inicio = new Date(hoje)
+      inicio.setDate(hoje.getDate() - 7)
+      return { inicio: inicio.toISOString().split('T')[0], fim: hojeStr }
+    }
+    if (periodoAtual === 'mes') {
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+      return { inicio: inicio.toISOString().split('T')[0], fim: hojeStr }
+    }
+    if (periodoAtual === 'personalizado') {
+      return {
+        inicio: document.getElementById('dataInicio').value || hojeStr,
+        fim: document.getElementById('dataFim').value || hojeStr
+      }
+    }
+    return { inicio: hojeStr, fim: hojeStr }
+  }
 
   async function verificarFiados() {
     const res = await fetch(`${API}/financeiro`)
@@ -221,8 +291,8 @@
   const iniciais = (empresa.nome || '??').split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase()
   document.getElementById('avatarEmpresa').textContent = iniciais
   document.getElementById('saudacao').textContent = `Olá, ${empresa.nome}! 👋`
-  const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-  document.getElementById('dataHoje').textContent = hoje.charAt(0).toUpperCase() + hoje.slice(1)
+  const hoje2 = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  document.getElementById('dataHoje').textContent = hoje2.charAt(0).toUpperCase() + hoje2.slice(1)
 
   function goto(page, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
@@ -230,7 +300,6 @@
     document.getElementById('page-' + page).classList.add('active')
     el.classList.add('active')
     carregarDados()
-  verificarFiados()
   }
 
   function sair() {
@@ -266,14 +335,12 @@
 
   async function carregarDados() {
     if (!empresa.id) return
-
     const [rv, rp, rc, rf] = await Promise.all([
       fetch(`${API}/vendas`),
       fetch(`${API}/produtos`),
       fetch(`${API}/clientes`),
       fetch(`${API}/fornecedores`)
     ])
-
     const vendas = await rv.json()
     const produtos = await rp.json()
     const clientes = await rc.json()
@@ -284,15 +351,36 @@
     const clientesEmpresa = clientes.filter(c => c.empresa_id == empresa.id)
     const fornecedoresEmpresa = fornecedores.filter(f => f.empresa_id == empresa.id)
 
-    // Métricas
-    const hoje = new Date().toISOString().split('T')[0]
-    const totalVendas = vendasEmpresa.filter(v => v.data_venda && v.data_venda.startsWith(hoje)).reduce((s, v) => s + v.total, 0)
+    const { inicio, fim } = getDateRange()
+    const vendasPeriodo = vendasEmpresa.filter(v => {
+      if (!v.data_venda) return false
+      const d = v.data_venda.substring(0, 10)
+      return d >= inicio && d <= fim
+    })
+    const totalVendas = vendasPeriodo.reduce((s, v) => s + v.total, 0)
     document.getElementById('vendasHoje').textContent = 'R$ ' + totalVendas.toFixed(2)
+
+    const resF = await fetch(`${API}/financeiro`)
+    const financeiro = await resF.json()
+    const financeiroEmpresa = financeiro.filter(f => f.empresa_id == empresa.id)
+
+    const saidas = financeiroEmpresa.filter(f =>
+      f.tipo === 'pagar' &&
+      f.status === 'pago' &&
+      f.vencimento >= inicio &&
+      f.vencimento <= fim
+    ).reduce((s, f) => s + f.valor, 0)
+    document.getElementById('saidasCaixa').textContent = 'R$ ' + saidas.toFixed(2)
+
+    const lucro = totalVendas - saidas
+    const lucroEl = document.getElementById('lucroLiquido')
+    lucroEl.textContent = 'R$ ' + lucro.toFixed(2)
+    lucroEl.className = 'metric-value ' + (lucro >= 0 ? 'green' : 'red')
+
     document.getElementById('totalItens').textContent = produtosEmpresa.reduce((s, p) => s + p.quantidade, 0)
     document.getElementById('totalClientes').textContent = clientesEmpresa.length
     document.getElementById('totalFiado').textContent = 'R$ ' + clientesEmpresa.reduce((s, c) => s + c.divida_atual, 0).toFixed(2)
 
-    // Últimas vendas
     const tbody = document.getElementById('ultimasVendas')
     tbody.innerHTML = vendasEmpresa.length ? vendasEmpresa.slice(-5).reverse().map(v => `
       <tr>
@@ -302,9 +390,8 @@
         <td>${v.data_venda ? v.data_venda.substring(0,10) : '—'}</td>
       </tr>`).join('') : '<tr><td colspan="4" class="empty"><i class="ti ti-shopping-cart"></i>Nenhuma venda ainda</td></tr>'
 
-    // Vendas
     const tbodyVendas = document.getElementById('listaVendas')
-    tbodyVendas.innerHTML = vendasEmpresa.length ? vendasEmpresa.reverse().map(v => `
+    tbodyVendas.innerHTML = vendasEmpresa.length ? [...vendasEmpresa].reverse().map(v => `
       <tr>
         <td>${v.data_venda ? v.data_venda.substring(0,10) : '—'}</td>
         <td>${v.cliente_id ? '#'+v.cliente_id : '—'}</td>
@@ -312,7 +399,6 @@
         <td><span class="badge ${v.forma_pagamento === 'Pix' ? 'green' : v.forma_pagamento === 'Nota' ? 'amber' : 'blue'}">${v.forma_pagamento}</span></td>
       </tr>`).join('') : '<tr><td colspan="4" class="empty"><i class="ti ti-shopping-cart"></i>Nenhuma venda ainda</td></tr>'
 
-    // Estoque
     const tbodyEstoque = document.getElementById('listaEstoque')
     tbodyEstoque.innerHTML = produtosEmpresa.length ? produtosEmpresa.map(p => `
       <tr>
@@ -324,7 +410,6 @@
         <td><button class="btn-del" onclick="deletarProduto(${p.id}, '${p.nome}')"><i class="ti ti-trash"></i></button></td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-box"></i>Nenhum produto cadastrado</td></tr>'
 
-    // Clientes
     const tbodyClientes = document.getElementById('listaClientes')
     tbodyClientes.innerHTML = clientesEmpresa.length ? clientesEmpresa.map(c => `
       <tr>
@@ -340,12 +425,8 @@
         </td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr>'
 
-    // Fornecedores
-    const resF = await fetch(`${API}/financeiro`)
-    const financeiro = await resF.json()
-    const financeiroEmpresa = financeiro.filter(f => f.empresa_id == empresa.id)
     const tbodyFinanceiro = document.getElementById('listaFinanceiro')
-    tbodyFinanceiro.innerHTML = financeiroEmpresa.length ? financeiroEmpresa.reverse().map(f => `
+    tbodyFinanceiro.innerHTML = financeiroEmpresa.length ? [...financeiroEmpresa].reverse().map(f => `
       <tr>
         <td>${f.descricao}</td>
         <td>${f.vencimento || '—'}</td>
@@ -378,6 +459,7 @@
   }
 
   carregarDados()
+  verificarFiados()
 </script>
 </body>
 </html>
