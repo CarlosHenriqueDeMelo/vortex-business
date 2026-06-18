@@ -364,15 +364,15 @@
     const financeiro = await resF.json()
     const financeiroEmpresa = financeiro.filter(f => f.empresa_id == empresa.id)
 
-    const saidas = financeiroEmpresa.filter(f =>
+    const totalSaidas = financeiroEmpresa.filter(f =>
       f.tipo === 'pagar' &&
       f.status === 'pago' &&
       f.vencimento >= inicio &&
       f.vencimento <= fim
     ).reduce((s, f) => s + f.valor, 0)
-    document.getElementById('saidasCaixa').textContent = 'R$ ' + saidas.toFixed(2)
+    document.getElementById('saidasCaixa').textContent = 'R$ ' + totalSaidas.toFixed(2)
 
-    const lucro = totalVendas - saidas
+    const lucro = totalVendas - totalSaidas
     const lucroEl = document.getElementById('lucroLiquido')
     lucroEl.textContent = 'R$ ' + lucro.toFixed(2)
     lucroEl.className = 'metric-value ' + (lucro >= 0 ? 'green' : 'red')
@@ -433,7 +433,8 @@
         <td>R$ ${parseFloat(f.valor).toFixed(2)}</td>
         <td><span class="badge ${f.tipo === 'pagar' ? 'red' : 'green'}">${f.tipo === 'pagar' ? 'Pagar' : 'Receber'}</span></td>
         <td><span class="badge ${f.status === 'pago' ? 'green' : f.status === 'cancelado' ? 'red' : 'amber'}">${f.status}</span></td>
-      </tr>`).join('') : '<tr><td colspan="5" class="empty"><i class="ti ti-cash"></i>Nenhum lançamento ainda</td></tr>'
+        <td>${f.status !== 'pago' ? `<button onclick="marcarPago(${f.id})" style="background:transparent;border:none;color:#1D9E75;cursor:pointer;font-size:16px" title="Marcar como pago"><i class="ti ti-check"></i></button>` : '<span style="color:#1D9E75;font-size:12px">✓ Pago</span>'}</td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-cash"></i>Nenhum lançamento ainda</td></tr>'
 
     const tbodyFornecedores = document.getElementById('listaFornecedores')
     tbodyFornecedores.innerHTML = fornecedoresEmpresa.length ? fornecedoresEmpresa.map(f => `
@@ -444,6 +445,20 @@
         <td><span class="badge ${f.ativo ? 'green' : 'amber'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
         <td><button class="btn-del" onclick="deletarFornecedor(${f.id}, '${f.nome}')"><i class="ti ti-trash"></i></button></td>
       </tr>`).join('') : '<tr><td colspan="5" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr>'
+  }
+
+  async function marcarPago(id) {
+    if (!confirm('Marcar este lançamento como pago?')) return
+    const res = await fetch(`${API}/financeiro/${id}/pagar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    if (res.ok) {
+      carregarDados()
+    } else {
+      alert('Erro ao marcar como pago.')
+    }
   }
 
   async function deletarProduto(id, nome) {

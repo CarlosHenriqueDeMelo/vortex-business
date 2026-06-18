@@ -144,7 +144,7 @@
           <button class="pag-btn" onclick="setPagamento('Dinheiro', this)">Dinheiro</button>
         </div>
       </div>
-      <div class="field" style="margin-top:12px" id="prazoCampo" style="display:none">
+      <div class="field" id="prazoCampo" style="display:none;margin-top:12px">
         <div class="label">Prazo para pagamento (dias)</div>
         <input class="input" type="number" id="diasPrazo" value="30" min="1" placeholder="Ex: 30"/>
       </div>
@@ -305,6 +305,7 @@
   }
 
   function setPagamento(val, btn) {
+    document.getElementById("prazoCampo").style.display = val === "Nota" ? "block" : "none"
     formaPagamento = val
     document.querySelectorAll('.pag-btn').forEach(b => b.classList.remove('active'))
     btn.classList.add('active')
