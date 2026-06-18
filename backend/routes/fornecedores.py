@@ -29,3 +29,15 @@ def deletar_fornecedor(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Fornecedor deletado com sucesso!'}), 200
+
+@fornecedores_bp.route('/fornecedores/<int:id>', methods=['PUT'])
+def editar_fornecedor(id):
+    dados = request.json
+    conn = get_connection()
+    conn.execute(
+        'UPDATE fornecedores SET nome = ?, categoria = ?, telefone = ? WHERE id = ?',
+        (dados['nome'], dados.get('categoria'), dados.get('telefone'), id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Fornecedor atualizado!'}), 200

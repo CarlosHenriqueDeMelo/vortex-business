@@ -66,6 +66,32 @@
     .empty { text-align: center; padding: 40px; color: #333; font-size: 13px; }
     .empty i { font-size: 36px; margin-bottom: 12px; display: block; }
     .btn-del { background: transparent; border: none; color: #E24B4A; cursor: pointer; font-size: 16px; padding: 2px 6px; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 28px; width: 420px; }
+    .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+    .modal-title i { color: #534AB7; }
+    .modal-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .modal-label { font-size: 12px; color: #555; }
+    .modal-input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 9px 12px; width: 100%; outline: none; font-family: inherit; }
+    .modal-input:focus { border-color: #534AB7; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-btn-cancel { flex: 1; background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 10px; font-size: 13px; color: #555; cursor: pointer; font-family: inherit; }
+    .modal-btn-save { flex: 1; background: #534AB7; border: none; border-radius: 8px; padding: 10px; font-size: 13px; color: #fff; cursor: pointer; font-family: inherit; }
+    .btn-edit { background: transparent; border: none; color: #534AB7; cursor: pointer; font-size: 16px; padding: 2px 6px; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 28px; width: 420px; }
+    .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+    .modal-title i { color: #534AB7; }
+    .modal-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .modal-label { font-size: 12px; color: #555; }
+    .modal-input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 9px 12px; width: 100%; outline: none; font-family: inherit; }
+    .modal-input:focus { border-color: #534AB7; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-btn-cancel { flex: 1; background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 10px; font-size: 13px; color: #555; cursor: pointer; font-family: inherit; }
+    .modal-btn-save { flex: 1; background: #534AB7; border: none; border-radius: 8px; padding: 10px; font-size: 13px; color: #fff; cursor: pointer; font-family: inherit; }
+    .btn-edit { background: transparent; border: none; color: #534AB7; cursor: pointer; font-size: 16px; padding: 2px 6px; }
   </style>
 </head>
 <body>
@@ -218,6 +244,28 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalEditar">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitulo"><i class="ti ti-edit"></i> Editar</div>
+    <div id="modalCampos"></div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="modal-btn-save" onclick="salvarEdicao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalEditar">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitulo"><i class="ti ti-edit"></i> Editar</div>
+    <div id="modalCampos"></div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="modal-btn-save" onclick="salvarEdicao()">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -407,7 +455,7 @@
         <td>${p.quantidade}</td>
         <td>R$ ${parseFloat(p.preco_venda).toFixed(2)}</td>
         <td><span class="badge ${p.quantidade === 0 ? 'red' : p.quantidade <= p.quantidade_minima ? 'amber' : 'green'}">${p.quantidade === 0 ? 'Zerado' : p.quantidade <= p.quantidade_minima ? 'Baixo' : 'Normal'}</span></td>
-        <td><button class="btn-del" onclick="deletarProduto(${p.id}, '${p.nome}')"><i class="ti ti-trash"></i></button></td>
+        <td><button class="btn-edit" onclick="abrirModalProduto(${p.id},'${p.nome}','${p.categoria||''}',${p.preco_venda},${p.preco_custo},${p.quantidade_minima})"><i class="ti ti-edit"></i></button><button class="btn-del" onclick="deletarProduto(${p.id}, '${p.nome}')"><i class="ti ti-trash"></i></button></td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-box"></i>Nenhum produto cadastrado</td></tr>'
 
     const tbodyClientes = document.getElementById('listaClientes')
@@ -421,6 +469,7 @@
         <td style="display:flex;gap:6px">
           ${c.divida_atual > 0 ? `<button onclick="window.location.href='gerenciar-fiado.html?id=${c.id}&empresa_id=${empresa.id}'" style="background:transparent;border:none;color:#1D9E75;cursor:pointer;font-size:16px" title="Gerenciar fiado"><i class="ti ti-cash"></i></button>` : ''}
           ${c.divida_atual > 0 ? `<button onclick="pdfCliente(${c.id})" style="background:transparent;border:none;color:#534AB7;cursor:pointer;font-size:16px" title="Gerar PDF do fiado"><i class="ti ti-file-text"></i></button>` : ''}
+          <button class="btn-edit" onclick="abrirModalCliente(${c.id},'${c.nome}','${c.telefone||''}','${c.cidade||''}','${c.regiao||''}')"><i class="ti ti-edit"></i></button>
           <button class="btn-del" onclick="deletarCliente(${c.id}, '${c.nome}')"><i class="ti ti-trash"></i></button>
         </td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr>'
@@ -443,7 +492,7 @@
         <td>${f.categoria || '—'}</td>
         <td>${f.telefone || '—'}</td>
         <td><span class="badge ${f.ativo ? 'green' : 'amber'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
-        <td><button class="btn-del" onclick="deletarFornecedor(${f.id}, '${f.nome}')"><i class="ti ti-trash"></i></button></td>
+        <td><button class="btn-edit" onclick="abrirModalFornecedor(${f.id},'${f.nome}','${f.categoria||''}','${f.telefone||''}')"><i class="ti ti-edit"></i></button><button class="btn-del" onclick="deletarFornecedor(${f.id}, '${f.nome}')"><i class="ti ti-trash"></i></button></td>
       </tr>`).join('') : '<tr><td colspan="5" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr>'
   }
 
@@ -470,6 +519,93 @@
   async function deletarFornecedor(id, nome) {
     if (!confirm(`Deletar "${nome}"? Esta ação não pode ser desfeita.`)) return
     await fetch(`${API}/fornecedores/${id}`, { method: 'DELETE' })
+    carregarDados()
+  }
+
+  let editandoTipo = null
+  let editandoId = null
+
+  function abrirModalCliente(id, nome, telefone, cidade, regiao) {
+    editandoTipo = 'cliente'
+    editandoId = id
+    document.getElementById('modalTitulo').innerHTML = '<i class="ti ti-user"></i> Editar Cliente'
+    document.getElementById('modalCampos').innerHTML = `
+      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${nome}"/></div>
+      <div class="modal-field"><div class="modal-label">Telefone</div><input class="modal-input" id="edTelefone" value="${telefone || ''}"/></div>
+      <div class="modal-field"><div class="modal-label">Cidade</div><input class="modal-input" id="edCidade" value="${cidade || ''}"/></div>
+      <div class="modal-field"><div class="modal-label">Região</div><input class="modal-input" id="edRegiao" value="${regiao || ''}"/></div>
+    `
+    document.getElementById('modalEditar').classList.add('active')
+  }
+
+  function abrirModalFornecedor(id, nome, categoria, telefone) {
+    editandoTipo = 'fornecedor'
+    editandoId = id
+    document.getElementById('modalTitulo').innerHTML = '<i class="ti ti-truck"></i> Editar Fornecedor'
+    document.getElementById('modalCampos').innerHTML = `
+      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${nome}"/></div>
+      <div class="modal-field"><div class="modal-label">Categoria</div><input class="modal-input" id="edCategoria" value="${categoria || ''}"/></div>
+      <div class="modal-field"><div class="modal-label">Telefone</div><input class="modal-input" id="edTelefone" value="${telefone || ''}"/></div>
+    `
+    document.getElementById('modalEditar').classList.add('active')
+  }
+
+  function abrirModalProduto(id, nome, categoria, preco_venda, preco_custo, quantidade_minima) {
+    editandoTipo = 'produto'
+    editandoId = id
+    document.getElementById('modalTitulo').innerHTML = '<i class="ti ti-box"></i> Editar Produto'
+    document.getElementById('modalCampos').innerHTML = `
+      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${nome}"/></div>
+      <div class="modal-field"><div class="modal-label">Categoria</div><input class="modal-input" id="edCategoria" value="${categoria || ''}"/></div>
+      <div class="modal-field"><div class="modal-label">Preço de venda (R$)</div><input class="modal-input" type="number" step="0.01" id="edPrecoVenda" value="${preco_venda}"/></div>
+      <div class="modal-field"><div class="modal-label">Preço de custo (R$)</div><input class="modal-input" type="number" step="0.01" id="edPrecoCusto" value="${preco_custo}"/></div>
+      <div class="modal-field"><div class="modal-label">Qtd. mínima</div><input class="modal-input" type="number" id="edQtdMin" value="${quantidade_minima}"/></div>
+    `
+    document.getElementById('modalEditar').classList.add('active')
+  }
+
+  function fecharModal() {
+    document.getElementById('modalEditar').classList.remove('active')
+    editandoTipo = null
+    editandoId = null
+  }
+
+  async function salvarEdicao() {
+    if (editandoTipo === 'cliente') {
+      await fetch(`${API}/clientes/${editandoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: document.getElementById('edNome').value,
+          telefone: document.getElementById('edTelefone').value,
+          cidade: document.getElementById('edCidade').value,
+          regiao: document.getElementById('edRegiao').value
+        })
+      })
+    } else if (editandoTipo === 'fornecedor') {
+      await fetch(`${API}/fornecedores/${editandoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: document.getElementById('edNome').value,
+          categoria: document.getElementById('edCategoria').value,
+          telefone: document.getElementById('edTelefone').value
+        })
+      })
+    } else if (editandoTipo === 'produto') {
+      await fetch(`${API}/produtos/${editandoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: document.getElementById('edNome').value,
+          categoria: document.getElementById('edCategoria').value,
+          preco_venda: parseFloat(document.getElementById('edPrecoVenda').value),
+          preco_custo: parseFloat(document.getElementById('edPrecoCusto').value),
+          quantidade_minima: parseInt(document.getElementById('edQtdMin').value)
+        })
+      })
+    }
+    fecharModal()
     carregarDados()
   }
 

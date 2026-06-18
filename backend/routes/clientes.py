@@ -83,3 +83,15 @@ def pdf_cliente(id):
     from pdf_generator import gerar_pdf_cliente
     pdf_path = gerar_pdf_cliente(cliente, fiados_list, empresa)
     return jsonify({'pdf': pdf_path})
+
+@clientes_bp.route('/clientes/<int:id>', methods=['PUT'])
+def editar_cliente(id):
+    dados = request.json
+    conn = get_connection()
+    conn.execute(
+        'UPDATE clientes SET nome = ?, telefone = ?, cidade = ?, regiao = ? WHERE id = ?',
+        (dados['nome'], dados.get('telefone'), dados.get('cidade'), dados.get('regiao'), id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Cliente atualizado!'}), 200
