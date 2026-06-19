@@ -71,10 +71,17 @@ def pagar_fiado(id):
 @vendas_bp.route('/vendas/pdf', methods=['GET'])
 def pdf_vendas_periodo():
     empresa_id = request.args.get('empresa_id')
+    inicio = request.args.get('inicio')
+    fim = request.args.get('fim')
     conn = get_connection()
     empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
-    vendas = conn.execute('SELECT * FROM vendas WHERE empresa_id = ?', (empresa_id,)).fetchall()
+    query = 'SELECT * FROM vendas WHERE empresa_id = ?'
+    params = [empresa_id]
+    if inicio and fim:
+        query += ' AND date(data_venda) BETWEEN date(?) AND date(?)'
+        params.extend([inicio, fim])
+    vendas = conn.execute(query, params).fetchall()
     conn.close()
     from pdf_generator import gerar_pdf_vendas_periodo
-    pdf_path = gerar_pdf_vendas_periodo(empresa, [dict(v) for v in vendas])
+    pdf_path = gerar_pdf_vendas_periodo(empresa, [dict(v) for v in vendas], inicio, fim)
     return jsonify({'pdf': pdf_path})

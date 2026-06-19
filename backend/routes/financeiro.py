@@ -43,10 +43,17 @@ def pagar_lancamento(id):
 @financeiro_bp.route('/financeiro/pdf', methods=['GET'])
 def pdf_financeiro_relatorio():
     empresa_id = request.args.get('empresa_id')
+    inicio = request.args.get('inicio')
+    fim = request.args.get('fim')
     conn = get_connection()
     empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
-    lancamentos = conn.execute('SELECT * FROM financeiro WHERE empresa_id = ?', (empresa_id,)).fetchall()
+    query = 'SELECT * FROM financeiro WHERE empresa_id = ?'
+    params = [empresa_id]
+    if inicio and fim:
+        query += ' AND date(vencimento) BETWEEN date(?) AND date(?)'
+        params.extend([inicio, fim])
+    lancamentos = conn.execute(query, params).fetchall()
     conn.close()
     from pdf_generator import gerar_pdf_financeiro
-    pdf_path = gerar_pdf_financeiro(empresa, [dict(l) for l in lancamentos])
+    pdf_path = gerar_pdf_financeiro(empresa, [dict(l) for l in lancamentos], inicio, fim)
     return jsonify({'pdf': pdf_path})

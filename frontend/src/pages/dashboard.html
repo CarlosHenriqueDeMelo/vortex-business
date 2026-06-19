@@ -92,6 +92,11 @@
     .modal-btn-cancel { flex: 1; background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 10px; font-size: 13px; color: #555; cursor: pointer; font-family: inherit; }
     .modal-btn-save { flex: 1; background: #534AB7; border: none; border-radius: 8px; padding: 10px; font-size: 13px; color: #fff; cursor: pointer; font-family: inherit; }
     .btn-edit { background: transparent; border: none; color: #534AB7; cursor: pointer; font-size: 16px; padding: 2px 6px; }
+    .periodo-opcao { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #aaa; cursor: pointer; margin-bottom: 8px; transition: all 0.12s; }
+    .periodo-opcao:hover { border-color: #534AB7; }
+    .periodo-opcao.active { background: #1a1040; border-color: #534AB7; color: #7F77DD; }
+    .periodo-custom-dates { display: none; gap: 10px; margin-top: 10px; }
+    .periodo-custom-dates.visible { display: flex; }
   </style>
 </head>
 <body>
@@ -247,6 +252,26 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalPeriodo">
+  <div class="modal-box">
+    <div class="modal-title" id="modalPeriodoTitulo"><i class="ti ti-calendar"></i> Selecionar periodo</div>
+    <div class="periodo-opcao" onclick="selecionarPeriodoRelatorio('hoje', this)">Hoje</div>
+    <div class="periodo-opcao" onclick="selecionarPeriodoRelatorio('7', this)">Ultimos 7 dias</div>
+    <div class="periodo-opcao" onclick="selecionarPeriodoRelatorio('30', this)">Ultimos 30 dias</div>
+    <div class="periodo-opcao" onclick="selecionarPeriodoRelatorio('60', this)">Ultimos 60 dias</div>
+    <div class="periodo-opcao" onclick="selecionarPeriodoRelatorio('todos', this)">Todo o periodo</div>
+    <div class="periodo-opcao" onclick="selecionarPeriodoRelatorio('personalizado', this)">Periodo personalizado</div>
+    <div class="periodo-custom-dates" id="periodoCustomDates">
+      <input type="date" class="modal-input" id="dataInicioRelatorio"/>
+      <input type="date" class="modal-input" id="dataFimRelatorio"/>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="fecharModalPeriodo()">Cancelar</button>
+      <button class="modal-btn-save" onclick="confirmarPeriodoRelatorio()">Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalEditar">
   <div class="modal-box">
     <div class="modal-title" id="modalTitulo"><i class="ti ti-edit"></i> Editar</div>
@@ -355,14 +380,74 @@
     window.location.href = 'index.html'
   }
 
-  async function gerarRelatorio(tipo) {
-    const rotas = {
-      vendas: 'vendas/pdf',
-      estoque: 'produtos/pdf',
-      fiado: 'clientes/relatorio-fiado/pdf',
-      financeiro: 'financeiro/pdf'
+  let relatorioTipoAtual = null
+  let periodoSelecionado = null
+
+  const ROTAS_RELATORIO = {
+    vendas: 'vendas/pdf',
+    estoque: 'produtos/pdf',
+    fiado: 'clientes/relatorio-fiado/pdf',
+    financeiro: 'financeiro/pdf'
+  }
+
+  function gerarRelatorio(tipo) {
+    relatorioTipoAtual = tipo
+    periodoSelecionado = null
+    document.querySelectorAll('.periodo-opcao').forEach(el => el.classList.remove('active'))
+    document.getElementById('periodoCustomDates').classList.remove('visible')
+    if (tipo === 'estoque' || tipo === 'fiado') {
+      // Esses relatorios nao tem filtro de data (sao posicao atual), gera direto
+      executarGeracaoRelatorio()
+    } else {
+      document.getElementById('modalPeriodo').classList.add('active')
     }
-    const res = await fetch(`${API}/${rotas[tipo]}?empresa_id=${empresa.id}`)
+  }
+
+  function fecharModalPeriodo() {
+    document.getElementById('modalPeriodo').classList.remove('active')
+  }
+
+  function selecionarPeriodoRelatorio(valor, el) {
+    periodoSelecionado = valor
+    document.querySelectorAll('.periodo-opcao').forEach(opt => opt.classList.remove('active'))
+    el.classList.add('active')
+    document.getElementById('periodoCustomDates').classList.toggle('visible', valor === 'personalizado')
+  }
+
+  function getIntervaloPeriodo(valor) {
+    const hoje = new Date()
+    const hojeStr = hoje.toISOString().split('T')[0]
+    if (valor === 'hoje') return { inicio: hojeStr, fim: hojeStr }
+    if (valor === '7' || valor === '30' || valor === '60') {
+      const d = new Date(hoje)
+      d.setDate(hoje.getDate() - parseInt(valor))
+      return { inicio: d.toISOString().split('T')[0], fim: hojeStr }
+    }
+    if (valor === 'todos') return { inicio: null, fim: null }
+    if (valor === 'personalizado') {
+      return {
+        inicio: document.getElementById('dataInicioRelatorio').value,
+        fim: document.getElementById('dataFimRelatorio').value
+      }
+    }
+    return { inicio: null, fim: null }
+  }
+
+  async function confirmarPeriodoRelatorio() {
+    if (!periodoSelecionado) { alert('Selecione um periodo.'); return }
+    const { inicio, fim } = getIntervaloPeriodo(periodoSelecionado)
+    if (periodoSelecionado === 'personalizado' && (!inicio || !fim)) {
+      alert('Selecione as duas datas.')
+      return
+    }
+    fecharModalPeriodo()
+    await executarGeracaoRelatorio(inicio, fim)
+  }
+
+  async function executarGeracaoRelatorio(inicio, fim) {
+    let url = `${API}/${ROTAS_RELATORIO[relatorioTipoAtual]}?empresa_id=${empresa.id}`
+    if (inicio && fim) url += `&inicio=${inicio}&fim=${fim}`
+    const res = await fetch(url)
     const data = await res.json()
     if (data.pdf) {
       const { shell } = require('electron')

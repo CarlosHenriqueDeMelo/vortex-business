@@ -265,7 +265,7 @@ def gerar_pdf_estoque(empresa, produtos):
     c.save()
     return nome_arquivo
 
-def gerar_pdf_financeiro(empresa, lancamentos):
+def gerar_pdf_financeiro(empresa, lancamentos, inicio=None, fim=None):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
     os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"relatorio_financeiro_{empresa['id']}.pdf")
@@ -290,21 +290,31 @@ def gerar_pdf_financeiro(empresa, lancamentos):
 
     c.setFont("Helvetica-Bold", 14)
     c.drawString(50, altura - 120, "Relatorio Financeiro")
+    if inicio and fim:
+        c.setFont("Helvetica", 10)
+        c.setFillColor(colors.grey)
+        c.drawString(50, altura - 138, f"Periodo: {inicio} a {fim}")
+        c.setFillColor(colors.black)
 
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(colors.HexColor('#534AB7'))
-    c.drawString(50, altura - 150, "Descricao")
-    c.drawString(250, altura - 150, "Vencimento")
-    c.drawString(350, altura - 150, "Tipo")
-    c.drawString(420, altura - 150, "Status")
-    c.drawString(500, altura - 150, "Valor")
+    c.drawString(50, altura - 158, "Descricao")
+    c.drawString(250, altura - 158, "Vencimento")
+    c.drawString(350, altura - 158, "Tipo")
+    c.drawString(420, altura - 158, "Status")
+    c.drawString(500, altura - 158, "Valor")
     c.setFillColor(colors.black)
-    c.line(50, altura - 160, largura - 50, altura - 160)
+    c.line(50, altura - 168, largura - 50, altura - 168)
 
     c.setFont("Helvetica", 10)
-    y = altura - 180
+    y = altura - 188
     total_pagar = 0
     total_receber = 0
+    if not lancamentos:
+        c.setFont("Helvetica", 11)
+        c.setFillColor(colors.grey)
+        c.drawString(50, y, "Nenhum lancamento encontrado no periodo selecionado.")
+        c.setFillColor(colors.black)
     for lanc in lancamentos:
         c.drawString(50, y, str(lanc.get('descricao', '-'))[:30])
         c.drawString(250, y, lanc.get('vencimento') or '-')
@@ -338,7 +348,7 @@ def gerar_pdf_financeiro(empresa, lancamentos):
     c.save()
     return nome_arquivo
 
-def gerar_pdf_vendas_periodo(empresa, vendas):
+def gerar_pdf_vendas_periodo(empresa, vendas, inicio=None, fim=None):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
     os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"vendas_periodo_{empresa['id']}.pdf")
@@ -363,20 +373,30 @@ def gerar_pdf_vendas_periodo(empresa, vendas):
 
     c.setFont("Helvetica-Bold", 14)
     c.drawString(50, altura - 120, "Relatorio de Vendas")
+    if inicio and fim:
+        c.setFont("Helvetica", 10)
+        c.setFillColor(colors.grey)
+        c.drawString(50, altura - 138, f"Periodo: {inicio} a {fim}")
+        c.setFillColor(colors.black)
 
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(colors.HexColor('#534AB7'))
-    c.drawString(50, altura - 150, "Venda")
-    c.drawString(120, altura - 150, "Data")
-    c.drawString(250, altura - 150, "Cliente")
-    c.drawString(380, altura - 150, "Pagamento")
-    c.drawString(500, altura - 150, "Total")
+    c.drawString(50, altura - 158, "Venda")
+    c.drawString(120, altura - 158, "Data")
+    c.drawString(250, altura - 158, "Cliente")
+    c.drawString(380, altura - 158, "Pagamento")
+    c.drawString(500, altura - 158, "Total")
     c.setFillColor(colors.black)
-    c.line(50, altura - 160, largura - 50, altura - 160)
+    c.line(50, altura - 168, largura - 50, altura - 168)
 
     c.setFont("Helvetica", 10)
-    y = altura - 180
+    y = altura - 188
     total_geral = 0
+    if not vendas:
+        c.setFont("Helvetica", 11)
+        c.setFillColor(colors.grey)
+        c.drawString(50, y, "Nenhuma venda encontrada no periodo selecionado.")
+        c.setFillColor(colors.black)
     for v in vendas:
         c.drawString(50, y, f"#{v['id']}")
         data_v = v.get('data_venda', '-') or '-'
