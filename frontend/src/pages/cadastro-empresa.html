@@ -89,6 +89,21 @@
       <div class="label">Confirmar senha *</div>
       <input class="input" type="password" id="senha2" placeholder="••••" maxlength="4"/>
     </div>
+    <div class="field">
+      <div class="label">Pergunta de seguranca (recuperar senha)</div>
+      <select class="input" id="perguntaSeguranca">
+        <option value="">Selecione uma pergunta</option>
+        <option>Qual o nome do seu primeiro animal de estimacao?</option>
+        <option>Qual o nome da rua onde voce cresceu?</option>
+        <option>Qual o nome da sua mae?</option>
+        <option>Qual sua comida favorita?</option>
+        <option>Qual o nome da sua primeira escola?</option>
+      </select>
+    </div>
+    <div class="field">
+      <div class="label">Resposta</div>
+      <input class="input" type="text" id="respostaSeguranca" placeholder="Sua resposta..."/>
+    </div>
 
     <div class="err" id="errMsg"></div>
     <div class="success" id="successMsg"></div>
@@ -145,7 +160,11 @@
         const res = await fetch(`${API}/empresas`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, setor, senha, logo_base64: logoBase64 })
+          body: JSON.stringify({
+            nome, setor, senha, logo_base64: logoBase64,
+            pergunta_seguranca: document.getElementById('perguntaSeguranca').value,
+            resposta_seguranca: document.getElementById('respostaSeguranca').value
+          })
         })
         const data = await res.json()
         if (res.ok) {

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Recuperar Senha — Vortex</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .card { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 12px; padding: 36px; width: 420px; }
+    .title { font-size: 16px; font-weight: 500; color: #fff; margin-bottom: 4px; text-align: center; }
+    .subtitle { font-size: 13px; color: #444; margin-bottom: 24px; text-align: center; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .label { font-size: 12px; color: #555; }
+    .input { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; color: #fff; font-size: 13px; padding: 10px 12px; width: 100%; outline: none; font-family: inherit; }
+    .input:focus { border-color: #534AB7; }
+    select.input { cursor: pointer; }
+    .btn-primary { width: 100%; background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-primary:hover { background: #3C3489; }
+    .btn-ghost { width: 100%; background: transparent; color: #555; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 8px; }
+    .btn-ghost:hover { color: #aaa; border-color: #444; }
+    .err { font-size: 12px; color: #E24B4A; min-height: 16px; text-align: center; margin-top: 4px; }
+    .success { font-size: 12px; color: #1D9E75; min-height: 16px; text-align: center; margin-top: 4px; }
+    .pergunta-box { background: #111113; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 12px; font-size: 13px; color: #aaa; margin-bottom: 14px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="title"><i class="ti ti-lock-question"></i> Recuperar senha</div>
+    <div class="subtitle">Responda a pergunta de seguranca para redefinir sua senha</div>
+
+    <div class="field">
+      <div class="label">Empresa</div>
+      <select class="input" id="empresaSel" onchange="buscarPergunta()"></select>
+    </div>
+
+    <div class="pergunta-box" id="perguntaBox"></div>
+
+    <div class="field" id="respostaField" style="display:none">
+      <div class="label">Resposta</div>
+      <input class="input" type="text" id="resposta" placeholder="Sua resposta..."/>
+    </div>
+
+    <div class="field" id="novaSenhaField" style="display:none">
+      <div class="label">Nova senha (4 digitos)</div>
+      <input class="input" type="password" id="novaSenha" maxlength="4" placeholder="••••"/>
+    </div>
+
+    <div class="field" id="confirmarSenhaField" style="display:none">
+      <div class="label">Confirmar nova senha</div>
+      <input class="input" type="password" id="confirmarSenha" maxlength="4" placeholder="••••"/>
+    </div>
+
+    <div class="err" id="errMsg"></div>
+    <div class="success" id="successMsg"></div>
+
+    <button class="btn-primary" id="btnAcao" style="display:none" onclick="resetarSenha()">Redefinir senha</button>
+    <button class="btn-ghost" onclick="window.location.href='index.html'"><i class="ti ti-arrow-left"></i> Voltar</button>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:5000'
+
+    async function init() {
+      const res = await fetch(`${API}/empresas`)
+      const empresas = await res.json()
+      const sel = document.getElementById('empresaSel')
+      sel.innerHTML = '<option value="">Selecione</option>'
+      empresas.forEach(e => {
+        const opt = document.createElement('option')
+        opt.value = e.id
+        opt.textContent = e.nome
+        sel.appendChild(opt)
+      })
+    }
+    init()
+
+    async function buscarPergunta() {
+      const id = document.getElementById('empresaSel').value
+      document.getElementById('errMsg').textContent = ''
+      if (!id) {
+        document.getElementById('perguntaBox').style.display = 'none'
+        document.getElementById('respostaField').style.display = 'none'
+        document.getElementById('novaSenhaField').style.display = 'none'
+        document.getElementById('confirmarSenhaField').style.display = 'none'
+        document.getElementById('btnAcao').style.display = 'none'
+        return
+      }
+      const res = await fetch(`${API}/empresas/${id}/pergunta`)
+      const data = await res.json()
+      if (res.ok) {
+        document.getElementById('perguntaBox').textContent = data.pergunta
+        document.getElementById('perguntaBox').style.display = 'block'
+        document.getElementById('respostaField').style.display = 'flex'
+        document.getElementById('novaSenhaField').style.display = 'flex'
+        document.getElementById('confirmarSenhaField').style.display = 'flex'
+        document.getElementById('btnAcao').style.display = 'block'
+      } else {
+        document.getElementById('errMsg').textContent = data.mensagem
+        document.getElementById('perguntaBox').style.display = 'none'
+        document.getElementById('respostaField').style.display = 'none'
+        document.getElementById('novaSenhaField').style.display = 'none'
+        document.getElementById('confirmarSenhaField').style.display = 'none'
+        document.getElementById('btnAcao').style.display = 'none'
+      }
+    }
+
+    async function resetarSenha() {
+      document.getElementById('errMsg').textContent = ''
+      document.getElementById('successMsg').textContent = ''
+      const id = document.getElementById('empresaSel').value
+      const resposta = document.getElementById('resposta').value
+      const novaSenha = document.getElementById('novaSenha').value
+      const confirmarSenha = document.getElementById('confirmarSenha').value
+
+      if (!resposta) { document.getElementById('errMsg').textContent = 'Responda a pergunta de seguranca.'; return; }
+      if (novaSenha.length < 4) { document.getElementById('errMsg').textContent = 'A senha deve ter 4 digitos.'; return; }
+      if (novaSenha !== confirmarSenha) { document.getElementById('errMsg').textContent = 'As senhas nao coincidem.'; return; }
+
+      const res = await fetch(`${API}/empresas/${id}/resetar-senha`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resposta, nova_senha: novaSenha })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        document.getElementById('successMsg').textContent = 'Senha redefinida! Redirecionando...'
+        setTimeout(() => window.location.href = 'index.html', 1500)
+      } else {
+        document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao redefinir senha.'
+      }
+    }
+  </script>
+</body>
+</html>

@@ -27,8 +27,10 @@ def criar_empresa():
             f.write(base64.b64decode(dados['logo_base64']))
         foto_path = caminho
     conn.execute(
-        'INSERT INTO empresas (nome, setor, senha_hash, foto_path) VALUES (?, ?, ?, ?)',
-        (dados['nome'], dados.get('setor'), hash_senha(dados['senha']), foto_path)
+        'INSERT INTO empresas (nome, setor, senha_hash, foto_path, pergunta_seguranca, resposta_seguranca) VALUES (?, ?, ?, ?, ?, ?)',
+        (dados['nome'], dados.get('setor'), hash_senha(dados['senha']), foto_path,
+         dados.get('pergunta_seguranca'),
+         dados.get('resposta_seguranca', '').lower().strip() if dados.get('resposta_seguranca') else None)
     )
     conn.commit()
     conn.close()
@@ -81,3 +83,33 @@ def editar_empresa(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Empresa atualizada com sucesso!'}), 200
+
+@empresas_bp.route('/empresas/<int:id>/pergunta', methods=['GET'])
+def obter_pergunta(id):
+    conn = get_connection()
+    empresa = conn.execute('SELECT pergunta_seguranca FROM empresas WHERE id = ?', (id,)).fetchone()
+    conn.close()
+    if not empresa or not empresa['pergunta_seguranca']:
+        return jsonify({'mensagem': 'Esta empresa nao configurou recuperacao de senha'}), 404
+    return jsonify({'pergunta': empresa['pergunta_seguranca']})
+
+@empresas_bp.route('/empresas/<int:id>/resetar-senha', methods=['POST'])
+def resetar_senha(id):
+    dados = request.json
+    conn = get_connection()
+    empresa = conn.execute('SELECT resposta_seguranca FROM empresas WHERE id = ?', (id,)).fetchone()
+    if not empresa or not empresa['resposta_seguranca']:
+        conn.close()
+        return jsonify({'mensagem': 'Recuperacao nao configurada'}), 404
+    resposta_enviada = (dados.get('resposta') or '').lower().strip()
+    if not resposta_enviada or resposta_enviada != empresa['resposta_seguranca']:
+        conn.close()
+        return jsonify({'mensagem': 'Resposta incorreta'}), 401
+    nova_senha = dados.get('nova_senha')
+    if not nova_senha or len(nova_senha) < 4:
+        conn.close()
+        return jsonify({'mensagem': 'Nova senha invalida'}), 400
+    conn.execute('UPDATE empresas SET senha_hash = ? WHERE id = ?', (hash_senha(nova_senha), id))
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Senha redefinida com sucesso!'}), 200
