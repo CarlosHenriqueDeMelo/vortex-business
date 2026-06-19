@@ -95,3 +95,14 @@ def editar_cliente(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Cliente atualizado!'}), 200
+
+@clientes_bp.route('/clientes/relatorio-fiado/pdf', methods=['GET'])
+def pdf_clientes_fiado():
+    empresa_id = request.args.get('empresa_id')
+    conn = get_connection()
+    empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
+    clientes = conn.execute('SELECT * FROM clientes WHERE empresa_id = ? AND divida_atual > 0', (empresa_id,)).fetchall()
+    conn.close()
+    from pdf_generator import gerar_pdf_clientes_fiado
+    pdf_path = gerar_pdf_clientes_fiado(empresa, [dict(c) for c in clientes])
+    return jsonify({'pdf': pdf_path})

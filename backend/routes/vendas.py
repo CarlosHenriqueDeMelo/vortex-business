@@ -67,3 +67,14 @@ def pagar_fiado(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Fiado marcado como pago!'}), 200
+
+@vendas_bp.route('/vendas/pdf', methods=['GET'])
+def pdf_vendas_periodo():
+    empresa_id = request.args.get('empresa_id')
+    conn = get_connection()
+    empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
+    vendas = conn.execute('SELECT * FROM vendas WHERE empresa_id = ?', (empresa_id,)).fetchall()
+    conn.close()
+    from pdf_generator import gerar_pdf_vendas_periodo
+    pdf_path = gerar_pdf_vendas_periodo(empresa, [dict(v) for v in vendas])
+    return jsonify({'pdf': pdf_path})

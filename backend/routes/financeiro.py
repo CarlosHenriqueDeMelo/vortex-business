@@ -39,3 +39,14 @@ def pagar_lancamento(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Marcado como pago!'}), 200
+
+@financeiro_bp.route('/financeiro/pdf', methods=['GET'])
+def pdf_financeiro_relatorio():
+    empresa_id = request.args.get('empresa_id')
+    conn = get_connection()
+    empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
+    lancamentos = conn.execute('SELECT * FROM financeiro WHERE empresa_id = ?', (empresa_id,)).fetchall()
+    conn.close()
+    from pdf_generator import gerar_pdf_financeiro
+    pdf_path = gerar_pdf_financeiro(empresa, [dict(l) for l in lancamentos])
+    return jsonify({'pdf': pdf_path})

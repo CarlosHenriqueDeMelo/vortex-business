@@ -192,3 +192,280 @@ def gerar_pdf_cliente(cliente, fiados, empresa):
 
     c.save()
     return nome_arquivo
+
+def gerar_pdf_estoque(empresa, produtos):
+    downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    os.makedirs(downloads, exist_ok=True)
+    nome_arquivo = os.path.join(downloads, f"posicao_estoque_{empresa['id']}.pdf")
+
+    c = canvas.Canvas(nome_arquivo, pagesize=A4)
+    largura, altura = A4
+
+    logo_path = empresa.get('foto_path')
+    if logo_path:
+        logo_path = os.path.normpath(logo_path)
+    if logo_path and os.path.exists(logo_path):
+        c.drawImage(logo_path, 50, altura - 85, width=70, height=70, preserveAspectRatio=True, mask='auto')
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(130, altura - 50, empresa['nome'])
+    else:
+        c.setFont("Helvetica-Bold", 22)
+        c.drawString(50, altura - 50, empresa['nome'])
+
+    c.setStrokeColor(colors.HexColor('#534AB7'))
+    c.line(50, altura - 95, largura - 50, altura - 95)
+    c.setStrokeColor(colors.black)
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, altura - 120, "Posicao de Estoque")
+
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(colors.HexColor('#534AB7'))
+    c.drawString(50, altura - 150, "Produto")
+    c.drawString(280, altura - 150, "Categoria")
+    c.drawString(400, altura - 150, "Qtd")
+    c.drawString(450, altura - 150, "Custo")
+    c.drawString(510, altura - 150, "Venda")
+    c.setFillColor(colors.black)
+    c.line(50, altura - 160, largura - 50, altura - 160)
+
+    c.setFont("Helvetica", 10)
+    y = altura - 180
+    valor_total_estoque = 0
+    for p in produtos:
+        cor = colors.HexColor('#E24B4A') if p['quantidade'] == 0 else colors.HexColor('#EF9F27') if p['quantidade'] <= p['quantidade_minima'] else colors.black
+        c.setFillColor(cor)
+        c.drawString(50, y, p['nome'][:28])
+        c.setFillColor(colors.black)
+        c.drawString(280, y, p.get('categoria') or '-')
+        c.drawString(400, y, str(p['quantidade']))
+        c.drawString(450, y, f"R$ {p['preco_custo']:.2f}")
+        c.drawString(510, y, f"R$ {p['preco_venda']:.2f}")
+        valor_total_estoque += p['quantidade'] * p['preco_custo']
+        y -= 16
+        if y < 80:
+            c.showPage()
+            y = altura - 50
+
+    c.line(50, y - 5, largura - 50, y - 5)
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(colors.HexColor('#534AB7'))
+    c.drawString(280, y - 24, "Valor total em estoque:")
+    c.drawString(450, y - 24, f"R$ {valor_total_estoque:.2f}")
+    c.setFillColor(colors.black)
+
+    c.setFont("Helvetica", 9)
+    c.setFillColor(colors.grey)
+    c.drawCentredString(largura / 2, 30, "Gerado por Vortex Business")
+    c.setFillColor(colors.black)
+
+    c.save()
+    return nome_arquivo
+
+def gerar_pdf_financeiro(empresa, lancamentos):
+    downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    os.makedirs(downloads, exist_ok=True)
+    nome_arquivo = os.path.join(downloads, f"relatorio_financeiro_{empresa['id']}.pdf")
+
+    c = canvas.Canvas(nome_arquivo, pagesize=A4)
+    largura, altura = A4
+
+    logo_path = empresa.get('foto_path')
+    if logo_path:
+        logo_path = os.path.normpath(logo_path)
+    if logo_path and os.path.exists(logo_path):
+        c.drawImage(logo_path, 50, altura - 85, width=70, height=70, preserveAspectRatio=True, mask='auto')
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(130, altura - 50, empresa['nome'])
+    else:
+        c.setFont("Helvetica-Bold", 22)
+        c.drawString(50, altura - 50, empresa['nome'])
+
+    c.setStrokeColor(colors.HexColor('#534AB7'))
+    c.line(50, altura - 95, largura - 50, altura - 95)
+    c.setStrokeColor(colors.black)
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, altura - 120, "Relatorio Financeiro")
+
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(colors.HexColor('#534AB7'))
+    c.drawString(50, altura - 150, "Descricao")
+    c.drawString(250, altura - 150, "Vencimento")
+    c.drawString(350, altura - 150, "Tipo")
+    c.drawString(420, altura - 150, "Status")
+    c.drawString(500, altura - 150, "Valor")
+    c.setFillColor(colors.black)
+    c.line(50, altura - 160, largura - 50, altura - 160)
+
+    c.setFont("Helvetica", 10)
+    y = altura - 180
+    total_pagar = 0
+    total_receber = 0
+    for lanc in lancamentos:
+        c.drawString(50, y, str(lanc.get('descricao', '-'))[:30])
+        c.drawString(250, y, lanc.get('vencimento') or '-')
+        c.drawString(350, y, 'Pagar' if lanc['tipo'] == 'pagar' else 'Receber')
+        c.drawString(420, y, lanc.get('status', '-'))
+        c.drawString(500, y, f"R$ {lanc['valor']:.2f}")
+        if lanc['tipo'] == 'pagar':
+            total_pagar += lanc['valor']
+        else:
+            total_receber += lanc['valor']
+        y -= 18
+        if y < 80:
+            c.showPage()
+            y = altura - 50
+
+    c.line(50, y - 5, largura - 50, y - 5)
+    c.setFont("Helvetica-Bold", 12)
+    c.setFillColor(colors.HexColor('#E24B4A'))
+    c.drawString(350, y - 24, "Total a pagar:")
+    c.drawString(500, y - 24, f"R$ {total_pagar:.2f}")
+    c.setFillColor(colors.HexColor('#1D9E75'))
+    c.drawString(350, y - 42, "Total a receber:")
+    c.drawString(500, y - 42, f"R$ {total_receber:.2f}")
+    c.setFillColor(colors.black)
+
+    c.setFont("Helvetica", 9)
+    c.setFillColor(colors.grey)
+    c.drawCentredString(largura / 2, 30, "Gerado por Vortex Business")
+    c.setFillColor(colors.black)
+
+    c.save()
+    return nome_arquivo
+
+def gerar_pdf_vendas_periodo(empresa, vendas):
+    downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    os.makedirs(downloads, exist_ok=True)
+    nome_arquivo = os.path.join(downloads, f"vendas_periodo_{empresa['id']}.pdf")
+
+    c = canvas.Canvas(nome_arquivo, pagesize=A4)
+    largura, altura = A4
+
+    logo_path = empresa.get('foto_path')
+    if logo_path:
+        logo_path = os.path.normpath(logo_path)
+    if logo_path and os.path.exists(logo_path):
+        c.drawImage(logo_path, 50, altura - 85, width=70, height=70, preserveAspectRatio=True, mask='auto')
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(130, altura - 50, empresa['nome'])
+    else:
+        c.setFont("Helvetica-Bold", 22)
+        c.drawString(50, altura - 50, empresa['nome'])
+
+    c.setStrokeColor(colors.HexColor('#534AB7'))
+    c.line(50, altura - 95, largura - 50, altura - 95)
+    c.setStrokeColor(colors.black)
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, altura - 120, "Relatorio de Vendas")
+
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(colors.HexColor('#534AB7'))
+    c.drawString(50, altura - 150, "Venda")
+    c.drawString(120, altura - 150, "Data")
+    c.drawString(250, altura - 150, "Cliente")
+    c.drawString(380, altura - 150, "Pagamento")
+    c.drawString(500, altura - 150, "Total")
+    c.setFillColor(colors.black)
+    c.line(50, altura - 160, largura - 50, altura - 160)
+
+    c.setFont("Helvetica", 10)
+    y = altura - 180
+    total_geral = 0
+    for v in vendas:
+        c.drawString(50, y, f"#{v['id']}")
+        data_v = v.get('data_venda', '-') or '-'
+        if data_v and len(data_v) > 10:
+            data_v = data_v[:10]
+        c.drawString(120, y, data_v)
+        c.drawString(250, y, f"#{v['cliente_id']}" if v.get('cliente_id') else '-')
+        c.drawString(380, y, v.get('forma_pagamento', '-'))
+        c.drawString(500, y, f"R$ {v['total']:.2f}")
+        total_geral += v['total']
+        y -= 18
+        if y < 80:
+            c.showPage()
+            y = altura - 50
+
+    c.line(50, y - 5, largura - 50, y - 5)
+    c.setFont("Helvetica-Bold", 13)
+    c.setFillColor(colors.HexColor('#534AB7'))
+    c.drawString(380, y - 24, "Total geral:")
+    c.drawString(500, y - 24, f"R$ {total_geral:.2f}")
+    c.setFillColor(colors.black)
+
+    c.setFont("Helvetica", 9)
+    c.setFillColor(colors.grey)
+    c.drawCentredString(largura / 2, 30, "Gerado por Vortex Business")
+    c.setFillColor(colors.black)
+
+    c.save()
+    return nome_arquivo
+
+def gerar_pdf_clientes_fiado(empresa, clientes):
+    downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    os.makedirs(downloads, exist_ok=True)
+    nome_arquivo = os.path.join(downloads, f"clientes_fiado_{empresa['id']}.pdf")
+
+    c = canvas.Canvas(nome_arquivo, pagesize=A4)
+    largura, altura = A4
+
+    logo_path = empresa.get('foto_path')
+    if logo_path:
+        logo_path = os.path.normpath(logo_path)
+    if logo_path and os.path.exists(logo_path):
+        c.drawImage(logo_path, 50, altura - 85, width=70, height=70, preserveAspectRatio=True, mask='auto')
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(130, altura - 50, empresa['nome'])
+    else:
+        c.setFont("Helvetica-Bold", 22)
+        c.drawString(50, altura - 50, empresa['nome'])
+
+    c.setStrokeColor(colors.HexColor('#534AB7'))
+    c.line(50, altura - 95, largura - 50, altura - 95)
+    c.setStrokeColor(colors.black)
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, altura - 120, "Clientes com Fiado em Aberto")
+
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(colors.HexColor('#534AB7'))
+    c.drawString(50, altura - 150, "ID")
+    c.drawString(100, altura - 150, "Nome")
+    c.drawString(280, altura - 150, "Cidade")
+    c.drawString(400, altura - 150, "Telefone")
+    c.drawString(500, altura - 150, "Divida")
+    c.setFillColor(colors.black)
+    c.line(50, altura - 160, largura - 50, altura - 160)
+
+    c.setFont("Helvetica", 10)
+    y = altura - 180
+    total_geral = 0
+    for cli in clientes:
+        c.drawString(50, y, f"#{cli['id']}")
+        c.drawString(100, y, cli['nome'][:25])
+        c.drawString(280, y, cli.get('cidade') or '-')
+        c.drawString(400, y, cli.get('telefone') or '-')
+        c.drawString(500, y, f"R$ {cli['divida_atual']:.2f}")
+        total_geral += cli['divida_atual']
+        y -= 18
+        if y < 80:
+            c.showPage()
+            y = altura - 50
+
+    c.line(50, y - 5, largura - 50, y - 5)
+    c.setFont("Helvetica-Bold", 13)
+    c.setFillColor(colors.HexColor('#EF9F27'))
+    c.drawString(400, y - 24, "Total em aberto:")
+    c.drawString(500, y - 24, f"R$ {total_geral:.2f}")
+    c.setFillColor(colors.black)
+
+    c.setFont("Helvetica", 9)
+    c.setFillColor(colors.grey)
+    c.drawCentredString(largura / 2, 30, "Gerado por Vortex Business")
+    c.setFillColor(colors.black)
+
+    c.save()
+    return nome_arquivo

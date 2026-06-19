@@ -41,3 +41,14 @@ def deletar_produto(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Produto deletado com sucesso!'}), 200
+
+@produtos_bp.route('/produtos/pdf', methods=['GET'])
+def pdf_estoque():
+    empresa_id = request.args.get('empresa_id')
+    conn = get_connection()
+    empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
+    produtos = conn.execute('SELECT * FROM produtos WHERE empresa_id = ?', (empresa_id,)).fetchall()
+    conn.close()
+    from pdf_generator import gerar_pdf_estoque
+    pdf_path = gerar_pdf_estoque(empresa, [dict(p) for p in produtos])
+    return jsonify({'pdf': pdf_path})

@@ -237,10 +237,10 @@
       <div class="page-title">Relatórios</div>
       <div class="page-sub">Gere relatórios em PDF</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px">
-        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#534AB7;margin-bottom:8px"><i class="ti ti-chart-bar"></i></div><div class="metric-label">Vendas por período</div><div style="font-size:11px;color:#534AB7;margin-top:8px">Gerar PDF →</div></div>
-        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#1D9E75;margin-bottom:8px"><i class="ti ti-box"></i></div><div class="metric-label">Posição de estoque</div><div style="font-size:11px;color:#1D9E75;margin-top:8px">Gerar PDF →</div></div>
-        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#EF9F27;margin-bottom:8px"><i class="ti ti-users"></i></div><div class="metric-label">Clientes com fiado</div><div style="font-size:11px;color:#EF9F27;margin-top:8px">Gerar PDF →</div></div>
-        <div class="metric" style="cursor:pointer"><div style="font-size:24px;color:#378ADD;margin-bottom:8px"><i class="ti ti-cash"></i></div><div class="metric-label">Fluxo financeiro</div><div style="font-size:11px;color:#378ADD;margin-top:8px">Gerar PDF →</div></div>
+        <div class="metric" style="cursor:pointer" onclick="gerarRelatorio('vendas')"><div style="font-size:24px;color:#534AB7;margin-bottom:8px"><i class="ti ti-chart-bar"></i></div><div class="metric-label">Vendas por período</div><div style="font-size:11px;color:#534AB7;margin-top:8px">Gerar PDF →</div></div>
+        <div class="metric" style="cursor:pointer" onclick="gerarRelatorio('estoque')"><div style="font-size:24px;color:#1D9E75;margin-bottom:8px"><i class="ti ti-box"></i></div><div class="metric-label">Posição de estoque</div><div style="font-size:11px;color:#1D9E75;margin-top:8px">Gerar PDF →</div></div>
+        <div class="metric" style="cursor:pointer" onclick="gerarRelatorio('fiado')"><div style="font-size:24px;color:#EF9F27;margin-bottom:8px"><i class="ti ti-users"></i></div><div class="metric-label">Clientes com fiado</div><div style="font-size:11px;color:#EF9F27;margin-top:8px">Gerar PDF →</div></div>
+        <div class="metric" style="cursor:pointer" onclick="gerarRelatorio('financeiro')"><div style="font-size:24px;color:#378ADD;margin-bottom:8px"><i class="ti ti-cash"></i></div><div class="metric-label">Fluxo financeiro</div><div style="font-size:11px;color:#378ADD;margin-top:8px">Gerar PDF →</div></div>
       </div>
     </div>
 
@@ -353,6 +353,23 @@
   function sair() {
     localStorage.removeItem('empresa')
     window.location.href = 'index.html'
+  }
+
+  async function gerarRelatorio(tipo) {
+    const rotas = {
+      vendas: 'vendas/pdf',
+      estoque: 'produtos/pdf',
+      fiado: 'clientes/relatorio-fiado/pdf',
+      financeiro: 'financeiro/pdf'
+    }
+    const res = await fetch(`${API}/${rotas[tipo]}?empresa_id=${empresa.id}`)
+    const data = await res.json()
+    if (data.pdf) {
+      const { shell } = require('electron')
+      shell.openPath(data.pdf)
+    } else {
+      alert('Erro ao gerar relatorio.')
+    }
   }
 
   async function pdfCliente(id) {
