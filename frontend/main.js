@@ -16,7 +16,6 @@ function createWindow() {
   })
 
   win.loadFile(path.join(__dirname, 'src/pages/index.html'))
-  win.webContents.openDevTools({ mode: 'detach' })
 }
 
 app.whenReady().then(createWindow)
