@@ -3,6 +3,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 import os
 
+def fmt(valor):
+    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
 def gerar_pdf_venda(venda, itens, empresa, cliente=None):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
     os.makedirs(downloads, exist_ok=True)
@@ -65,8 +68,8 @@ def gerar_pdf_venda(venda, itens, empresa, cliente=None):
     for item in itens:
         c.drawString(50, y, str(item.get('nome', '')))
         c.drawString(310, y, str(item['quantidade']))
-        c.drawString(375, y, f"R$ {item['preco_unitario']:.2f}")
-        c.drawString(470, y, f"R$ {item['subtotal']:.2f}")
+        c.drawString(375, y, fmt(item['preco_unitario']))
+        c.drawString(470, y, fmt(item['subtotal']))
         y -= 22
 
     c.line(50, y - 5, largura - 50, y - 5)
@@ -79,7 +82,7 @@ def gerar_pdf_venda(venda, itens, empresa, cliente=None):
     c.setFont("Helvetica-Bold", 13)
     c.setFillColor(colors.HexColor('#534AB7'))
     c.drawString(375, y - 22, "Total:")
-    c.drawString(470, y - 22, f"R$ {venda['total']:.2f}")
+    c.drawString(470, y - 22, fmt(venda['total']))
     c.setFillColor(colors.black)
 
     c.setFont("Helvetica", 9)
@@ -152,7 +155,7 @@ def gerar_pdf_cliente(cliente, fiados, empresa):
             for item in itens:
                 c.drawString(50, y, item['produto_nome'])
                 c.drawString(220, y, f"x{item['quantidade']}")
-                c.drawString(270, y, f"R$ {item['subtotal']:.2f}")
+                c.drawString(270, y, fmt(item['subtotal']))
                 if primeiro:
                     c.drawString(350, y, data_venda)
                     c.drawString(460, y, vencimento)
@@ -163,7 +166,7 @@ def gerar_pdf_cliente(cliente, fiados, empresa):
             c.drawString(250, y, '—')
             c.drawString(310, y, data_venda)
             c.drawString(420, y, vencimento)
-            c.drawString(530, y, f"R$ {valor:.2f}")
+            c.drawString(530, y, fmt(valor))
             y -= 18
         obs = fiado.get('obs_venda')
         if obs:
@@ -182,7 +185,7 @@ def gerar_pdf_cliente(cliente, fiados, empresa):
     c.setFont("Helvetica-Bold", 13)
     c.setFillColor(colors.HexColor('#534AB7'))
     c.drawString(300, y - 22, "Total em aberto:")
-    c.drawString(430, y - 22, f"R$ {total:.2f}")
+    c.drawString(430, y - 22, fmt(total))
     c.setFillColor(colors.black)
 
     c.setFont("Helvetica", 9)
@@ -239,8 +242,8 @@ def gerar_pdf_estoque(empresa, produtos):
         c.setFillColor(colors.black)
         c.drawString(280, y, p.get('categoria') or '-')
         c.drawString(400, y, str(p['quantidade']))
-        c.drawString(450, y, f"R$ {p['preco_custo']:.2f}")
-        c.drawString(510, y, f"R$ {p['preco_venda']:.2f}")
+        c.drawString(450, y, fmt(p['preco_custo']))
+        c.drawString(510, y, fmt(p['preco_venda']))
         valor_total_estoque += p['quantidade'] * p['preco_custo']
         y -= 16
         if y < 80:
@@ -251,7 +254,7 @@ def gerar_pdf_estoque(empresa, produtos):
     c.setFont("Helvetica-Bold", 12)
     c.setFillColor(colors.HexColor('#534AB7'))
     c.drawString(280, y - 24, "Valor total em estoque:")
-    c.drawString(450, y - 24, f"R$ {valor_total_estoque:.2f}")
+    c.drawString(450, y - 24, fmt(valor_total_estoque))
     c.setFillColor(colors.black)
 
     c.setFont("Helvetica", 9)
@@ -307,7 +310,7 @@ def gerar_pdf_financeiro(empresa, lancamentos):
         c.drawString(250, y, lanc.get('vencimento') or '-')
         c.drawString(350, y, 'Pagar' if lanc['tipo'] == 'pagar' else 'Receber')
         c.drawString(420, y, lanc.get('status', '-'))
-        c.drawString(500, y, f"R$ {lanc['valor']:.2f}")
+        c.drawString(500, y, fmt(lanc['valor']))
         if lanc['tipo'] == 'pagar':
             total_pagar += lanc['valor']
         else:
@@ -321,10 +324,10 @@ def gerar_pdf_financeiro(empresa, lancamentos):
     c.setFont("Helvetica-Bold", 12)
     c.setFillColor(colors.HexColor('#E24B4A'))
     c.drawString(350, y - 24, "Total a pagar:")
-    c.drawString(500, y - 24, f"R$ {total_pagar:.2f}")
+    c.drawString(500, y - 24, fmt(total_pagar))
     c.setFillColor(colors.HexColor('#1D9E75'))
     c.drawString(350, y - 42, "Total a receber:")
-    c.drawString(500, y - 42, f"R$ {total_receber:.2f}")
+    c.drawString(500, y - 42, fmt(total_receber))
     c.setFillColor(colors.black)
 
     c.setFont("Helvetica", 9)
@@ -382,7 +385,7 @@ def gerar_pdf_vendas_periodo(empresa, vendas):
         c.drawString(120, y, data_v)
         c.drawString(250, y, f"#{v['cliente_id']}" if v.get('cliente_id') else '-')
         c.drawString(380, y, v.get('forma_pagamento', '-'))
-        c.drawString(500, y, f"R$ {v['total']:.2f}")
+        c.drawString(500, y, fmt(v['total']))
         total_geral += v['total']
         y -= 18
         if y < 80:
@@ -393,7 +396,7 @@ def gerar_pdf_vendas_periodo(empresa, vendas):
     c.setFont("Helvetica-Bold", 13)
     c.setFillColor(colors.HexColor('#534AB7'))
     c.drawString(380, y - 24, "Total geral:")
-    c.drawString(500, y - 24, f"R$ {total_geral:.2f}")
+    c.drawString(500, y - 24, fmt(total_geral))
     c.setFillColor(colors.black)
 
     c.setFont("Helvetica", 9)
@@ -448,7 +451,7 @@ def gerar_pdf_clientes_fiado(empresa, clientes):
         c.drawString(100, y, cli['nome'][:25])
         c.drawString(280, y, cli.get('cidade') or '-')
         c.drawString(400, y, cli.get('telefone') or '-')
-        c.drawString(500, y, f"R$ {cli['divida_atual']:.2f}")
+        c.drawString(500, y, fmt(cli['divida_atual']))
         total_geral += cli['divida_atual']
         y -= 18
         if y < 80:
@@ -459,7 +462,7 @@ def gerar_pdf_clientes_fiado(empresa, clientes):
     c.setFont("Helvetica-Bold", 13)
     c.setFillColor(colors.HexColor('#EF9F27'))
     c.drawString(400, y - 24, "Total em aberto:")
-    c.drawString(500, y - 24, f"R$ {total_geral:.2f}")
+    c.drawString(500, y - 24, fmt(total_geral))
     c.setFillColor(colors.black)
 
     c.setFont("Helvetica", 9)
