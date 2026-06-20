@@ -8,11 +8,10 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; user-select: none; }
-    .titlebar { height: 32px; background: #0d0d0f; display: flex; align-items: center; justify-content: flex-end; padding: 0 12px; -webkit-app-region: drag; gap: 8px; }
-    .titlebar-btn { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; -webkit-app-region: no-drag; }
-    .titlebar-btn.close { background: #E24B4A; }
-    .titlebar-btn.min { background: #EF9F27; }
-    .titlebar-btn.max { background: #1D9E75; }
+    .titlebar { height: 32px; background: #0d0d0f; display: flex; align-items: center; justify-content: flex-end; -webkit-app-region: drag; border-bottom: 0.5px solid #1a1a1e; }
+    .titlebar-btn { width: 44px; height: 32px; border: none; cursor: pointer; -webkit-app-region: no-drag; background: transparent; color: #666; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: background 0.12s; }
+    .titlebar-btn:hover { background: #1e1e22; color: #fff; }
+    .titlebar-btn.close:hover { background: #E24B4A; color: #fff; }
     .header { padding: 18px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid #1e1e22; }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-text { font-size: 20px; font-weight: 500; color: #fff; }
@@ -50,9 +49,9 @@
 </head>
 <body>
   <div class="titlebar">
-    <button class="titlebar-btn min" onclick="window.require('electron').remote.getCurrentWindow().minimize()"></button>
-    <button class="titlebar-btn max" onclick="window.require('electron').remote.getCurrentWindow().maximize()"></button>
-    <button class="titlebar-btn close" onclick="window.require('electron').remote.getCurrentWindow().close()"></button>
+    <button class="titlebar-btn min" onclick="require('electron').ipcRenderer.send('window-minimize')">&#x2212;</button>
+    <button class="titlebar-btn max" onclick="require('electron').ipcRenderer.send('window-maximize')">&#x25A1;</button>
+    <button class="titlebar-btn close" onclick="require('electron').ipcRenderer.send('window-close')">&#x2715;</button>
   </div>
 
   <div class="header">

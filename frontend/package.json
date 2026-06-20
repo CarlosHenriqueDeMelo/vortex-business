@@ -4,7 +4,7 @@
   "description": "Sistema de gestão para micro empresas",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "GDK_BACKEND=x11 electron .",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux deb"

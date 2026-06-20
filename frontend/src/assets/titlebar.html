@@ -1,0 +1,8 @@
+<div class="custom-titlebar">
+  <div class="custom-titlebar-title">Vortex Business</div>
+  <div class="custom-titlebar-controls">
+    <button class="custom-titlebar-btn" onclick="require('electron').ipcRenderer.send('window-minimize')"><i class="ti ti-minus"></i></button>
+    <button class="custom-titlebar-btn" onclick="require('electron').ipcRenderer.send('window-maximize')"><i class="ti ti-square"></i></button>
+    <button class="custom-titlebar-btn close-btn" onclick="require('electron').ipcRenderer.send('window-close')"><i class="ti ti-x"></i></button>
+  </div>
+</div>

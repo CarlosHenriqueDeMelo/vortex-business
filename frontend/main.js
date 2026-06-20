@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain } = require('electron')
 const path = require('path')
 const { spawn } = require('child_process')
 const fs = require('fs')
@@ -31,6 +31,8 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     backgroundColor: '#0d0d0f',
+    frame: false,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -38,8 +40,27 @@ function createWindow() {
     }
   })
 
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.insertCSS(`
+      .titlebar-button, .window-controls, [class*="traffic-light"] { opacity: 0 !important; pointer-events: none !important; }
+    `)
+  })
+
   win.loadFile(path.join(__dirname, 'src/pages/index.html'))
+
+  ipcMain.removeAllListeners('window-minimize')
+  ipcMain.removeAllListeners('window-maximize')
+  ipcMain.removeAllListeners('window-close')
+
+  ipcMain.on('window-minimize', () => win.minimize())
+  ipcMain.on('window-maximize', () => {
+    if (win.isMaximized()) win.unmaximize()
+    else win.maximize()
+  })
+  ipcMain.on('window-close', () => win.close())
 }
+
+Menu.setApplicationMenu(null)
 
 app.whenReady().then(() => {
   startBackend()
