@@ -36,7 +36,8 @@
       "installerIcon": "src/assets/icon.ico",
       "uninstallerIcon": "src/assets/icon.ico",
       "installerHeaderIcon": "src/assets/icon.ico",
-      "perMachine": false
+      "perMachine": false,
+      "artifactName": "Vortex Business Setup.exe"
     },
     "linux": {
       "target": "deb",

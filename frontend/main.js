@@ -19,9 +19,16 @@ function startBackend() {
     console.error('Backend nao encontrado em:', backendPath)
     return
   }
-  backendProcess = spawn(backendPath, [], { detached: false })
-  backendProcess.stdout.on('data', (data) => console.log(`Backend: ${data}`))
-  backendProcess.stderr.on('data', (data) => console.error(`Backend erro: ${data}`))
+  try {
+    backendProcess = spawn(backendPath, [], {
+      detached: false,
+      windowsHide: true,
+      cwd: path.dirname(backendPath)
+    })
+    backendProcess.on('error', (err) => console.error('Erro ao iniciar backend:', err))
+  } catch (e) {
+    console.error('Excecao ao iniciar backend:', e)
+  }
 }
 
 function createWindow() {
@@ -38,12 +45,6 @@ function createWindow() {
       contextIsolation: false,
       webSecurity: false
     }
-  })
-
-  win.webContents.on('did-finish-load', () => {
-    win.webContents.insertCSS(`
-      .titlebar-button, .window-controls, [class*="traffic-light"] { opacity: 0 !important; pointer-events: none !important; }
-    `)
   })
 
   win.loadFile(path.join(__dirname, 'src/pages/index.html'))
@@ -64,7 +65,7 @@ Menu.setApplicationMenu(null)
 
 app.whenReady().then(() => {
   startBackend()
-  setTimeout(createWindow, 1500)
+  setTimeout(createWindow, 3000)
 })
 
 app.on('window-all-closed', () => {

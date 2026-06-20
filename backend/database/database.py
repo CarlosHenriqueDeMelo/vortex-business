@@ -32,6 +32,8 @@ def inicializar_banco():
             setor TEXT,
             foto_path TEXT,
             senha_hash TEXT NOT NULL,
+            pergunta_seguranca TEXT,
+            resposta_seguranca TEXT,
             criado_em TEXT DEFAULT (datetime('now', 'localtime'))
         )
     ''')
@@ -94,6 +96,8 @@ def inicializar_banco():
             total_compras INTEGER DEFAULT 0,
             total_gasto REAL DEFAULT 0,
             divida_atual REAL DEFAULT 0,
+            ativo INTEGER DEFAULT 1,
+            documento TEXT,
             criado_em TEXT DEFAULT (datetime('now', 'localtime')),
             FOREIGN KEY (empresa_id) REFERENCES empresas(id)
         )
@@ -149,6 +153,21 @@ def inicializar_banco():
     ''')
     
     
+
+    # Migracao automatica - adiciona colunas que possam estar faltando em bancos antigos
+    colunas_extras = {
+        'empresas': ['pergunta_seguranca TEXT', 'resposta_seguranca TEXT'],
+        'clientes': ['ativo INTEGER DEFAULT 1', 'documento TEXT']
+    }
+    for tabela, colunas in colunas_extras.items():
+        existentes = [row[1] for row in c.execute(f"PRAGMA table_info({tabela})").fetchall()]
+        for coluna_def in colunas:
+            nome_coluna = coluna_def.split()[0]
+            if nome_coluna not in existentes:
+                try:
+                    c.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna_def}")
+                except sqlite3.OperationalError:
+                    pass
 
     conn.commit()
     conn.close()
