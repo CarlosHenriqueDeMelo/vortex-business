@@ -7,3 +7,8 @@ frontend/node_modules
 .env
 frontend/node_modules/electron/dist/
 frontend/node_modules/electron/dist/
+frontend/dist/
+backend/dist/
+backend/build/
+*.spec
+frontend/backend-bin/

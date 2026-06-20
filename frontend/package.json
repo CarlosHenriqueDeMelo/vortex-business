@@ -4,9 +4,49 @@
   "description": "Sistema de gestão para micro empresas",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux deb"
   },
   "devDependencies": {
-    "electron": "^42.3.3"
-  }
+    "electron": "^42.3.3",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.vortexbusiness.app",
+    "productName": "Vortex Business",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "src/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Vortex Business",
+      "installerIcon": "src/assets/icon.png",
+      "uninstallerIcon": "src/assets/icon.png",
+      "installerHeaderIcon": "src/assets/icon.png",
+      "perMachine": false
+    },
+    "linux": {
+      "target": "deb",
+      "category": "Office",
+      "icon": "src/assets/icon.png"
+    }
+  },
+  "author": {
+    "name": "Carlos Henrique de Melo",
+    "email": "ch0892160@gmail.com"
+  },
+  "homepage": "https://github.com/CarlosHenriqueDeMelo/vortex-business"
 }
