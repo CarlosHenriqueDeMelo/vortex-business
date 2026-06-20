@@ -25,7 +25,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "src/assets/icon.png"
+      "icon": "src/assets/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -33,9 +33,9 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Vortex Business",
-      "installerIcon": "src/assets/icon.png",
-      "uninstallerIcon": "src/assets/icon.png",
-      "installerHeaderIcon": "src/assets/icon.png",
+      "installerIcon": "src/assets/icon.ico",
+      "uninstallerIcon": "src/assets/icon.ico",
+      "installerHeaderIcon": "src/assets/icon.ico",
       "perMachine": false
     },
     "linux": {
