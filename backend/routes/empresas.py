@@ -5,7 +5,8 @@ import base64
 
 empresas_bp = Blueprint('empresas', __name__)
 
-LOGOS_DIR = os.path.join(os.path.dirname(__file__), '..', 'logos')
+from database.database import get_app_data_dir
+LOGOS_DIR = os.path.join(get_app_data_dir(), 'logos')
 os.makedirs(LOGOS_DIR, exist_ok=True)
 
 @empresas_bp.route('/empresas', methods=['GET'])

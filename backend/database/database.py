@@ -2,7 +2,15 @@ import sqlite3
 import os
 import hashlib
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'vortex.db')
+def get_app_data_dir():
+    if os.name == 'nt':
+        base = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'VortexBusiness')
+    else:
+        base = os.path.join(os.path.expanduser('~'), '.vortex-business')
+    os.makedirs(base, exist_ok=True)
+    return base
+
+DB_PATH = os.path.join(get_app_data_dir(), 'vortex.db')
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
