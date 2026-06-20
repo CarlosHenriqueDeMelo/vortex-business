@@ -97,6 +97,9 @@
     .periodo-opcao.active { background: #1a1040; border-color: #534AB7; color: #7F77DD; }
     .periodo-custom-dates { display: none; gap: 10px; margin-top: 10px; }
     .periodo-custom-dates.visible { display: flex; }
+    .search-box { background: #161618; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 9px 14px; font-size: 13px; color: #fff; width: 280px; outline: none; font-family: inherit; margin-bottom: 14px; }
+    .search-box::placeholder { color: #555; }
+    .search-box:focus { border-color: #534AB7; }
   </style>
 </head>
 <body>
@@ -178,6 +181,7 @@
         <div><div class="page-title">Estoque</div><div class="page-sub">Gerencie seus produtos</div></div>
         <button class="btn-primary" onclick="window.location.href='novo-produto.html'"><i class="ti ti-plus"></i> Novo produto</button> <button class="btn-primary" style="background:#1a1040;border:0.5px solid #2e2860" onclick="window.location.href='nova-entrada.html'"><i class="ti ti-package"></i> Entrada de mercadoria</button>
       </div>
+      <input class="search-box" placeholder="Buscar produto..." oninput="filtrarTabela('listaEstoque', this.value)"/>
       <div class="table-wrap">
         <table>
           <tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Preço venda</th><th>Status</th><th></th></tr>
@@ -204,6 +208,7 @@
         <div><div class="page-title">Clientes</div><div class="page-sub">Cadastro de clientes</div></div>
         <button class="btn-primary" onclick="window.location.href='novo-cliente.html'"><i class="ti ti-plus"></i> Novo cliente</button>
       </div>
+      <input class="search-box" placeholder="Buscar cliente..." oninput="filtrarTabela('listaClientes', this.value)"/>
       <div class="table-wrap">
         <table>
           <tr><th>ID</th><th>Nome</th><th>Cidade</th><th>Telefone</th><th>Fiado</th><th></th></tr>
@@ -230,6 +235,7 @@
         <div><div class="page-title">Fornecedores</div><div class="page-sub">Gerencie seus fornecedores</div></div>
         <button class="btn-primary" onclick="window.location.href='novo-fornecedor.html'"><i class="ti ti-plus"></i> Novo fornecedor</button>
       </div>
+      <input class="search-box" placeholder="Buscar fornecedor..." oninput="filtrarTabela('listaFornecedores', this.value)"/>
       <div class="table-wrap">
         <table>
           <tr><th>Nome</th><th>Categoria</th><th>Telefone</th><th>Status</th><th></th></tr>
@@ -596,6 +602,16 @@
         <td><span class="badge ${f.ativo ? 'green' : 'amber'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
         <td><button class="btn-edit" onclick="abrirModalFornecedor(${f.id},'${f.nome}','${f.categoria||''}','${f.telefone||''}')"><i class="ti ti-edit"></i></button><button class="btn-del" onclick="deletarFornecedor(${f.id}, '${f.nome}')"><i class="ti ti-trash"></i></button></td>
       </tr>`).join('') : '<tr><td colspan="5" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr>'
+  }
+
+  function filtrarTabela(tbodyId, termo) {
+    const tbody = document.getElementById(tbodyId)
+    const termoLower = termo.toLowerCase().trim()
+    Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+      if (tr.querySelector('.empty')) return
+      const texto = tr.textContent.toLowerCase()
+      tr.style.display = texto.includes(termoLower) ? '' : 'none'
+    })
   }
 
   async function marcarPago(id) {
