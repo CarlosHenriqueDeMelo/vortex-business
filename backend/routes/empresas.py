@@ -113,3 +113,17 @@ def resetar_senha(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Senha redefinida com sucesso!'}), 200
+
+@empresas_bp.route('/empresas/<int:id>', methods=['DELETE'])
+def deletar_empresa(id):
+    conn = get_connection()
+    conn.execute('DELETE FROM vendas WHERE empresa_id = ?', (id,))
+    conn.execute('DELETE FROM clientes WHERE empresa_id = ?', (id,))
+    conn.execute('DELETE FROM produtos WHERE empresa_id = ?', (id,))
+    conn.execute('DELETE FROM fornecedores WHERE empresa_id = ?', (id,))
+    conn.execute('DELETE FROM financeiro WHERE empresa_id = ?', (id,))
+    conn.execute('DELETE FROM entradas_estoque WHERE empresa_id = ?', (id,))
+    conn.execute('DELETE FROM empresas WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Empresa excluida com sucesso!'}), 200
