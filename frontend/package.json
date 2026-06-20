@@ -42,7 +42,13 @@
       "target": "deb",
       "category": "Office",
       "icon": "src/assets/icon.png"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "backend-bin",
+        "to": "backend-bin"
+      }
+    ]
   },
   "author": {
     "name": "Carlos Henrique de Melo",
