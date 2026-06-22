@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import hashlib
+import uuid as uuid_lib
 
 def get_app_data_dir():
     if os.name == 'nt':
@@ -20,6 +21,18 @@ def get_connection():
 
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
+
+def gerar_uuid():
+    """Gera um UUID novo para um registro. Usar sempre que criar empresa, produto, cliente, venda, etc."""
+    return str(uuid_lib.uuid4())
+
+def timestamp_atual():
+    """Retorna o timestamp atual no mesmo formato usado pelo banco (datetime local).
+    Usar para preencher updated_at sempre que criar OU editar um registro."""
+    conn = get_connection()
+    agora = conn.execute("SELECT datetime('now', 'localtime')").fetchone()[0]
+    conn.close()
+    return agora
 
 def inicializar_banco():
     conn = get_connection()
@@ -151,14 +164,27 @@ def inicializar_banco():
             FOREIGN KEY (cliente_id) REFERENCES clientes(id)
         )
     ''')
-    
-    
 
     # Migracao automatica - adiciona colunas que possam estar faltando em bancos antigos
+    tabelas_sync = [
+        'empresas', 'fornecedores', 'produtos', 'entradas_estoque',
+        'clientes', 'vendas', 'itens_venda', 'financeiro'
+    ]
+
     colunas_extras = {
         'empresas': ['pergunta_seguranca TEXT', 'resposta_seguranca TEXT'],
         'clientes': ['ativo INTEGER DEFAULT 1', 'documento TEXT']
     }
+
+    # Adiciona as colunas de sincronizacao (uuid, updated_at, deleted_at) em todas as tabelas
+    for tabela in tabelas_sync:
+        colunas_extras.setdefault(tabela, [])
+        colunas_extras[tabela] += [
+            'uuid TEXT',
+            'updated_at TEXT',
+            'deleted_at TEXT'
+        ]
+
     for tabela, colunas in colunas_extras.items():
         existentes = [row[1] for row in c.execute(f"PRAGMA table_info({tabela})").fetchall()]
         for coluna_def in colunas:
@@ -168,6 +194,28 @@ def inicializar_banco():
                     c.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna_def}")
                 except sqlite3.OperationalError:
                     pass
+
+    conn.commit()
+
+    # Popula uuid e updated_at em registros antigos que ainda nao tem (uuid fica NULL apos o ALTER TABLE)
+    agora = c.execute("SELECT datetime('now', 'localtime')").fetchone()[0]
+    for tabela in tabelas_sync:
+        linhas = c.execute(f"SELECT id FROM {tabela} WHERE uuid IS NULL").fetchall()
+        for linha in linhas:
+            novo_uuid = str(uuid_lib.uuid4())
+            c.execute(
+                f"UPDATE {tabela} SET uuid = ?, updated_at = ? WHERE id = ?",
+                (novo_uuid, agora, linha['id'])
+            )
+
+    # Garante uuid unico (apos popular os antigos) - evita duplicidade em sincronizacoes futuras
+    for tabela in tabelas_sync:
+        try:
+            c.execute(
+                f"CREATE UNIQUE INDEX IF NOT EXISTS idx_{tabela}_uuid ON {tabela}(uuid)"
+            )
+        except sqlite3.OperationalError:
+            pass
 
     conn.commit()
     conn.close()

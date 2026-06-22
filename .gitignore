@@ -12,3 +12,4 @@ backend/dist/
 backend/build/
 *.spec
 frontend/backend-bin/
+backend/logs/
