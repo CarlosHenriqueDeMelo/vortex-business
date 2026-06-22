@@ -105,6 +105,18 @@
     .titlebar-btn:hover { background: #1e1e22; color: #fff; }
     .titlebar-btn.close:hover { background: #E24B4A; color: #fff; }
       input[type=date], input[type=datetime-local], input[type=time] { color-scheme: dark; }
+    .sync-card { background: #161618; border: 0.5px solid #1e1e22; border-radius: 8px; padding: 24px; max-width: 480px; }
+    .sync-status { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .sync-dot { width: 9px; height: 9px; border-radius: 50%; background: #1D9E75; box-shadow: 0 0 8px #1D9E75; flex-shrink: 0; }
+    .sync-dot.off { background: #555; box-shadow: none; }
+    .sync-status-text { font-size: 13px; color: #aaa; }
+    .sync-ip-box { background: #0d0d0f; border: 0.5px solid #2a2a2e; border-radius: 6px; padding: 14px; margin-bottom: 16px; }
+    .sync-ip-label { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .sync-ip-value { font-size: 20px; color: #7F77DD; font-weight: 500; font-family: 'Consolas', monospace; }
+    .sync-ip-value.erro { color: #E24B4A; font-size: 13px; font-family: 'Segoe UI', sans-serif; }
+    .sync-hint { font-size: 12px; color: #555; line-height: 1.6; margin-bottom: 18px; }
+    .btn-refresh-ip { background: transparent; border: 0.5px solid #2a2a2e; border-radius: 8px; padding: 8px 16px; font-size: 12px; color: #888; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-refresh-ip:hover { color: #fff; border-color: #534AB7; }
   </style>
 </head>
 <body>
@@ -142,6 +154,7 @@
     <div class="nav-section">Financeiro</div>
     <div class="nav-item" onclick="goto('financeiro', this)"><i class="ti ti-cash"></i> Financeiro</div>
     <div class="nav-item" onclick="goto('fornecedores', this)"><i class="ti ti-truck"></i> Fornecedores</div>
+    <div class="nav-item" onclick="goto('sincronizacao', this)"><i class="ti ti-refresh"></i> Sincronização</div>
     <div class="nav-item" onclick="goto('relatorios', this)"><i class="ti ti-chart-bar"></i> Relatórios</div>
   </div>
 
@@ -252,6 +265,22 @@
           <tr><th>Nome</th><th>Categoria</th><th>Telefone</th><th>Status</th><th></th></tr>
           <tbody id="listaFornecedores"><tr><td colspan="5" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr></tbody>
         </table>
+      </div>
+    </div>
+    <div class="page" id="page-sincronizacao">
+      <div class="page-title">Sincronização</div>
+      <div class="page-sub">Conecte o app do celular a este computador</div>
+      <div class="sync-card">
+        <div class="sync-status">
+          <div class="sync-dot" id="syncDot"></div>
+          <div class="sync-status-text" id="syncStatusText">Verificando rede...</div>
+        </div>
+        <div class="sync-ip-box">
+          <div class="sync-ip-label">Endereço deste computador</div>
+          <div class="sync-ip-value" id="syncIpValue">—</div>
+        </div>
+        <div class="sync-hint">No celular, abra o Vortex Business e digite este endereço na tela de configuração de sincronização. Os dois dispositivos precisam estar conectados na mesma rede Wi-Fi.</div>
+        <button class="btn-refresh-ip" onclick="atualizarInfoSync()"><i class="ti ti-refresh"></i> Atualizar endereço</button>
       </div>
     </div>
 
@@ -389,9 +418,39 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
     document.getElementById('page-' + page).classList.add('active')
     el.classList.add('active')
+    if (page === 'sincronizacao') atualizarInfoSync()
     carregarDados()
   }
 
+  async function atualizarInfoSync() {
+    const dotEl = document.getElementById("syncDot")
+    const statusEl = document.getElementById("syncStatusText")
+    const ipEl = document.getElementById("syncIpValue")
+    if (!dotEl || !statusEl || !ipEl) return
+    statusEl.textContent = "Verificando rede..."
+    dotEl.classList.remove("off")
+    ipEl.classList.remove("erro")
+    ipEl.textContent = "—"
+    try {
+      const { ipcRenderer } = require("electron")
+      const info = await ipcRenderer.invoke("get-sync-info")
+      if (info && info.ip) {
+        ipEl.textContent = info.ip + ":" + info.porta
+        statusEl.textContent = "Pronto para sincronizar"
+        dotEl.classList.remove("off")
+      } else {
+        ipEl.textContent = "Nenhuma rede detectada"
+        ipEl.classList.add("erro")
+        statusEl.textContent = "Conecte-se a uma rede Wi-Fi"
+        dotEl.classList.add("off")
+      }
+    } catch (e) {
+      ipEl.textContent = "Erro ao verificar rede"
+      ipEl.classList.add("erro")
+      statusEl.textContent = "Não foi possível verificar"
+      dotEl.classList.add("off")
+    }
+  }
   function sair() {
     localStorage.removeItem('empresa')
     window.location.href = 'index.html'
@@ -428,6 +487,7 @@
     periodoSelecionado = valor
     document.querySelectorAll('.periodo-opcao').forEach(opt => opt.classList.remove('active'))
     el.classList.add('active')
+    if (page === 'sincronizacao') atualizarInfoSync()
     document.getElementById('periodoCustomDates').classList.toggle('visible', valor === 'personalizado')
   }
 

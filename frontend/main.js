@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu, ipcMain } = require('electron')
 const path = require('path')
 const { spawn } = require('child_process')
 const fs = require('fs')
-
+const os = require('os')
 let backendProcess = null
 
 function getBackendPath() {
@@ -31,6 +31,22 @@ function startBackend() {
   }
 }
 
+function getLocalIP() {
+  const interfaces = os.networkInterfaces()
+  for (const nome in interfaces) {
+    for (const iface of interfaces[nome]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        const nomeMinusculo = nome.toLowerCase()
+        if (nomeMinusculo.includes('docker') || nomeMinusculo.includes('vbox') || nomeMinusculo.includes('veth') || nomeMinusculo.includes('virtual')) {
+          continue
+        }
+        return iface.address
+      }
+    }
+  }
+  return null
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1100,
@@ -46,33 +62,34 @@ function createWindow() {
       webSecurity: false
     }
   })
-
   win.loadFile(path.join(__dirname, 'src/pages/index.html'))
-
   ipcMain.removeAllListeners('window-minimize')
   ipcMain.removeAllListeners('window-maximize')
   ipcMain.removeAllListeners('window-close')
-
+  ipcMain.removeAllListeners('get-sync-info')
   ipcMain.on('window-minimize', () => win.minimize())
   ipcMain.on('window-maximize', () => {
     if (win.isMaximized()) win.unmaximize()
     else win.maximize()
   })
   ipcMain.on('window-close', () => win.close())
+  ipcMain.handle('get-sync-info', () => {
+    return {
+      ip: getLocalIP(),
+      porta: 5000
+    }
+  })
 }
 
 Menu.setApplicationMenu(null)
-
 app.whenReady().then(() => {
   startBackend()
   setTimeout(createWindow, 3000)
 })
-
 app.on('window-all-closed', () => {
   if (backendProcess) backendProcess.kill()
   if (process.platform !== 'darwin') app.quit()
 })
-
 app.on('before-quit', () => {
   if (backendProcess) backendProcess.kill()
 })
