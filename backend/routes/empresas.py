@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from database.database import get_connection, hash_senha
+from database.database import get_connection, hash_senha, gerar_uuid, timestamp_atual
 import os
 import base64
 
@@ -28,10 +28,11 @@ def criar_empresa():
             f.write(base64.b64decode(dados['logo_base64']))
         foto_path = caminho
     conn.execute(
-        'INSERT INTO empresas (nome, setor, senha_hash, foto_path, pergunta_seguranca, resposta_seguranca) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO empresas (nome, setor, senha_hash, foto_path, pergunta_seguranca, resposta_seguranca, uuid, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         (dados['nome'], dados.get('setor'), hash_senha(dados['senha']), foto_path,
          dados.get('pergunta_seguranca'),
-         dados.get('resposta_seguranca', '').lower().strip() if dados.get('resposta_seguranca') else None)
+         dados.get('resposta_seguranca', '').lower().strip() if dados.get('resposta_seguranca') else None,
+         gerar_uuid(), timestamp_atual())
     )
     conn.commit()
     conn.close()
@@ -61,25 +62,26 @@ def editar_empresa(id):
         with open(caminho, 'wb') as f:
             f.write(base64.b64decode(dados['logo_base64']))
         foto_path = caminho
+    agora = timestamp_atual()
     if foto_path and dados.get('senha'):
         conn.execute(
-            'UPDATE empresas SET nome = ?, setor = ?, foto_path = ?, senha_hash = ? WHERE id = ?',
-            (dados['nome'], dados.get('setor'), foto_path, hash_senha(dados['senha']), id)
+            'UPDATE empresas SET nome = ?, setor = ?, foto_path = ?, senha_hash = ?, updated_at = ? WHERE id = ?',
+            (dados['nome'], dados.get('setor'), foto_path, hash_senha(dados['senha']), agora, id)
         )
     elif foto_path:
         conn.execute(
-            'UPDATE empresas SET nome = ?, setor = ?, foto_path = ? WHERE id = ?',
-            (dados['nome'], dados.get('setor'), foto_path, id)
+            'UPDATE empresas SET nome = ?, setor = ?, foto_path = ?, updated_at = ? WHERE id = ?',
+            (dados['nome'], dados.get('setor'), foto_path, agora, id)
         )
     elif dados.get('senha'):
         conn.execute(
-            'UPDATE empresas SET nome = ?, setor = ?, senha_hash = ? WHERE id = ?',
-            (dados['nome'], dados.get('setor'), hash_senha(dados['senha']), id)
+            'UPDATE empresas SET nome = ?, setor = ?, senha_hash = ?, updated_at = ? WHERE id = ?',
+            (dados['nome'], dados.get('setor'), hash_senha(dados['senha']), agora, id)
         )
     else:
         conn.execute(
-            'UPDATE empresas SET nome = ?, setor = ? WHERE id = ?',
-            (dados['nome'], dados.get('setor'), id)
+            'UPDATE empresas SET nome = ?, setor = ?, updated_at = ? WHERE id = ?',
+            (dados['nome'], dados.get('setor'), agora, id)
         )
     conn.commit()
     conn.close()
@@ -110,7 +112,7 @@ def resetar_senha(id):
     if not nova_senha or len(nova_senha) < 4:
         conn.close()
         return jsonify({'mensagem': 'Nova senha invalida'}), 400
-    conn.execute('UPDATE empresas SET senha_hash = ? WHERE id = ?', (hash_senha(nova_senha), id))
+    conn.execute('UPDATE empresas SET senha_hash = ?, updated_at = ? WHERE id = ?', (hash_senha(nova_senha), timestamp_atual(), id))
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Senha redefinida com sucesso!'}), 200

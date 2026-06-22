@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from database.database import get_connection
+from database.database import get_connection, gerar_uuid, timestamp_atual
 
 clientes_bp = Blueprint('clientes', __name__)
 
@@ -15,8 +15,9 @@ def criar_clientes():
     dados = request.json
     conn = get_connection()
     conn.execute(
-        'INSERT INTO clientes (empresa_id, nome, telefone, cidade, regiao) VALUES (?, ?, ?, ?, ?)',
-        (dados['empresa_id'], dados['nome'], dados.get('telefone'), dados.get('cidade'), dados.get('regiao'))
+        'INSERT INTO clientes (empresa_id, nome, telefone, cidade, regiao, uuid, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        (dados['empresa_id'], dados['nome'], dados.get('telefone'), dados.get('cidade'), dados.get('regiao'),
+         gerar_uuid(), timestamp_atual())
     )
     conn.commit()
     conn.close()
@@ -34,13 +35,14 @@ def deletar_clientes(id):
 def pagar_fiado(id):
     dados = request.json
     conn = get_connection()
+    agora = timestamp_atual()
     conn.execute(
-        'UPDATE clientes SET divida_atual = divida_atual - ? WHERE id = ?',
-        (dados['valor'], id)
+        'UPDATE clientes SET divida_atual = divida_atual - ?, updated_at = ? WHERE id = ?',
+        (dados['valor'], agora, id)
     )
     conn.execute(
-        "UPDATE financeiro SET status = 'pago' WHERE cliente_id = ? AND status = 'pendente'",
-        (id,)
+        "UPDATE financeiro SET status = 'pago', updated_at = ? WHERE cliente_id = ? AND status = 'pendente'",
+        (agora, id)
     )
     conn.commit()
     conn.close()
@@ -89,8 +91,8 @@ def editar_cliente(id):
     dados = request.json
     conn = get_connection()
     conn.execute(
-        'UPDATE clientes SET nome = ?, telefone = ?, cidade = ?, regiao = ? WHERE id = ?',
-        (dados['nome'], dados.get('telefone'), dados.get('cidade'), dados.get('regiao'), id)
+        'UPDATE clientes SET nome = ?, telefone = ?, cidade = ?, regiao = ?, updated_at = ? WHERE id = ?',
+        (dados['nome'], dados.get('telefone'), dados.get('cidade'), dados.get('regiao'), timestamp_atual(), id)
     )
     conn.commit()
     conn.close()

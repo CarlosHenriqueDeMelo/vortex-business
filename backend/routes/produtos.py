@@ -1,39 +1,34 @@
 from flask import Blueprint, request, jsonify
-from database.database import get_connection
-
+from database.database import get_connection, gerar_uuid, timestamp_atual
 produtos_bp = Blueprint('produtos', __name__)
-
 @produtos_bp.route('/produtos', methods=['GET'])
 def listar_produtos():
     conn = get_connection()
     produtos = conn.execute('SELECT * FROM produtos').fetchall()
     conn.close()
     return jsonify([dict(c) for c in produtos])
-
 @produtos_bp.route('/produtos', methods=['POST'])
 def criar_produtos():
     dados = request.json
     conn = get_connection()
     conn.execute(
-        'INSERT INTO produtos (empresa_id, nome, categoria, unidade, preco_custo, preco_venda, quantidade, quantidade_minima) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        (dados['empresa_id'], dados['nome'], dados.get('categoria'), dados.get('unidade'), dados.get('preco_custo'), dados.get('preco_venda'), dados.get('quantidade'), dados.get('quantidade_minima'))
+        'INSERT INTO produtos (empresa_id, nome, categoria, unidade, preco_custo, preco_venda, quantidade, quantidade_minima, uuid, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        (dados['empresa_id'], dados['nome'], dados.get('categoria'), dados.get('unidade'), dados.get('preco_custo'), dados.get('preco_venda'), dados.get('quantidade'), dados.get('quantidade_minima'), gerar_uuid(), timestamp_atual())
     )
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Produto cadastrado com sucesso!'}), 201
-
 @produtos_bp.route('/produtos/<int:id>', methods=['PUT'])
 def editar_produto(id):
     dados = request.json
     conn = get_connection()
     conn.execute(
-        'UPDATE produtos SET nome = ?, categoria = ?, unidade = ?, preco_custo = ?, preco_venda = ?, quantidade_minima = ? WHERE id = ?',
-        (dados['nome'], dados.get('categoria'), dados.get('unidade'), dados.get('preco_custo'), dados.get('preco_venda'), dados.get('quantidade_minima'), id)
+        'UPDATE produtos SET nome = ?, categoria = ?, unidade = ?, preco_custo = ?, preco_venda = ?, quantidade_minima = ?, updated_at = ? WHERE id = ?',
+        (dados['nome'], dados.get('categoria'), dados.get('unidade'), dados.get('preco_custo'), dados.get('preco_venda'), dados.get('quantidade_minima'), timestamp_atual(), id)
     )
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Produto atualizado com sucesso!'}), 200
-
 @produtos_bp.route('/produtos/<int:id>', methods=['DELETE'])
 def deletar_produto(id):
     conn = get_connection()
@@ -41,7 +36,6 @@ def deletar_produto(id):
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Produto deletado com sucesso!'}), 200
-
 @produtos_bp.route('/produtos/pdf', methods=['GET'])
 def pdf_estoque():
     empresa_id = request.args.get('empresa_id')
