@@ -13,3 +13,5 @@ backend/build/
 *.spec
 frontend/backend-bin/
 backend/logs/
+.env
+backend/.env
