@@ -8,6 +8,7 @@ from routes.vendas import vendas_bp
 from routes.fornecedores import fornecedores_bp
 from routes.financeiro import financeiro_bp
 from routes.entradas import entrada_bp
+from routes.sync import sync_bp
 import logging
 import os
 import traceback
@@ -30,6 +31,7 @@ app.register_blueprint(vendas_bp)
 app.register_blueprint(fornecedores_bp)
 app.register_blueprint(financeiro_bp)
 app.register_blueprint(entrada_bp)
+app.register_blueprint(sync_bp)
 
 inicializar_banco()
 
