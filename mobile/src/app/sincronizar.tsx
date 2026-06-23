@@ -46,7 +46,7 @@ export default function SincronizarScreen() {
         </ThemedView>
 
         <Pressable style={styles.btnPrimary} onPress={handleSincronizar}>
-          <ThemedText type="defaultSemiBold" style={styles.btnText}>
+          <ThemedText type="smallBold" style={styles.btnText}>
             {status === 'sincronizando' ? 'Sincronizando...' : 'Sincronizar agora'}
           </ThemedText>
         </Pressable>

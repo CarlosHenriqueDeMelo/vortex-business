@@ -39,8 +39,8 @@ export default function EstoqueScreen() {
           renderItem={({ item }) => (
             <ThemedView type="backgroundElement" style={styles.card}>
               <View style={styles.cardRow}>
-                <ThemedText type="defaultSemiBold">{item.nome}</ThemedText>
-                <ThemedText type="defaultSemiBold" style={styles.preco}>
+                <ThemedText type="smallBold">{item.nome}</ThemedText>
+                <ThemedText type="smallBold" style={styles.preco}>
                   R$ {item.preco_venda.toFixed(2)}
                 </ThemedText>
               </View>

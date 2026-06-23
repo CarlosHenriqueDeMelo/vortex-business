@@ -39,9 +39,9 @@ export default function ClientesScreen() {
           renderItem={({ item }) => (
             <ThemedView type="backgroundElement" style={styles.card}>
               <View style={styles.cardRow}>
-                <ThemedText type="defaultSemiBold">{item.nome}</ThemedText>
+                <ThemedText type="smallBold">{item.nome}</ThemedText>
                 {item.divida_atual > 0 ? (
-                  <ThemedText type="defaultSemiBold" style={styles.divida}>
+                  <ThemedText type="smallBold" style={styles.divida}>
                     R$ {item.divida_atual.toFixed(2)}
                   </ThemedText>
                 ) : (

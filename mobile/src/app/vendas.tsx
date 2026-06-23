@@ -23,7 +23,7 @@ export default function VendasScreen() {
         </View>
 
         <Pressable style={styles.btnPrimary}>
-          <ThemedText type="defaultSemiBold" style={styles.btnText}>
+          <ThemedText type="smallBold" style={styles.btnText}>
             Nova venda
           </ThemedText>
         </Pressable>
