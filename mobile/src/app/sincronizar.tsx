@@ -1,18 +1,42 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
+import { getMeta, setMeta } from '@/database/database';
+import { sincronizar } from '@/sync/syncClient';
+
+const EMPRESA_ID = 1;
+const SYNC_TOKEN = '';
 
 export default function SincronizarScreen() {
   const [ip, setIp] = useState('');
   const [status, setStatus] = useState<'idle' | 'sincronizando' | 'sucesso' | 'erro'>('idle');
+  const [mensagem, setMensagem] = useState('');
 
-  function handleSincronizar() {
+  useEffect(() => {
+    getMeta('ultimo_ip').then((salvo) => {
+      if (salvo) setIp(salvo);
+    });
+  }, []);
+
+  async function handleSincronizar() {
     if (!ip.trim()) return;
     setStatus('sincronizando');
+    setMensagem('');
+
+    const resultado = await sincronizar(ip.trim(), EMPRESA_ID, SYNC_TOKEN);
+
+    if (resultado.sucesso) {
+      setStatus('sucesso');
+      setMensagem(`Enviados ${resultado.enviados ?? 0}, recebidos ${resultado.recebidos ?? 0}`);
+      await setMeta('ultimo_ip', ip.trim());
+    } else {
+      setStatus('erro');
+      setMensagem(resultado.mensagem);
+    }
   }
 
   return (
@@ -45,7 +69,10 @@ export default function SincronizarScreen() {
           </ThemedText>
         </ThemedView>
 
-        <Pressable style={styles.btnPrimary} onPress={handleSincronizar}>
+        <Pressable
+          style={styles.btnPrimary}
+          onPress={handleSincronizar}
+          disabled={status === 'sincronizando'}>
           <ThemedText type="smallBold" style={styles.btnText}>
             {status === 'sincronizando' ? 'Sincronizando...' : 'Sincronizar agora'}
           </ThemedText>
@@ -53,12 +80,12 @@ export default function SincronizarScreen() {
 
         {status === 'sucesso' ? (
           <ThemedText type="small" style={styles.statusSucesso}>
-            Sincronizado com sucesso
+            Sincronizado com sucesso{mensagem ? ` — ${mensagem}` : ''}
           </ThemedText>
         ) : null}
         {status === 'erro' ? (
           <ThemedText type="small" style={styles.statusErro}>
-            Não foi possível conectar. Verifique o endereço e a rede Wi-Fi.
+            {mensagem || 'Não foi possível conectar.'}
           </ThemedText>
         ) : null}
       </SafeAreaView>

@@ -1,20 +1,33 @@
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
-
-type Cliente = {
-  id: string;
-  nome: string;
-  telefone: string | null;
-  divida_atual: number;
-};
-
-const clientesExemplo: Cliente[] = [];
+import { listarClientes, type Cliente } from '@/database/queries';
 
 export default function ClientesScreen() {
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let ativo = true;
+      setCarregando(true);
+      listarClientes().then((lista) => {
+        if (ativo) {
+          setClientes(lista);
+          setCarregando(false);
+        }
+      });
+      return () => {
+        ativo = false;
+      };
+    }, [])
+  );
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -26,15 +39,17 @@ export default function ClientesScreen() {
         </ThemedText>
 
         <FlatList
-          data={clientesExemplo}
-          keyExtractor={(item) => item.id}
+          data={clientes}
+          keyExtractor={(item) => item.uuid}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <ThemedText type="default" style={styles.emptyText}>
-                Nenhum cliente sincronizado ainda
-              </ThemedText>
-            </View>
+            !carregando ? (
+              <View style={styles.empty}>
+                <ThemedText type="default" style={styles.emptyText}>
+                  Nenhum cliente sincronizado ainda
+                </ThemedText>
+              </View>
+            ) : null
           }
           renderItem={({ item }) => (
             <ThemedView type="backgroundElement" style={styles.card}>
