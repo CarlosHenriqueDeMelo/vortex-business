@@ -47,6 +47,28 @@ function getLocalIP() {
   return null
 }
 
+function getSyncToken() {
+  // Le o token diretamente do arquivo .env do backend, sem precisar
+  // de dependencia extra no Electron (so um parser simples de uma linha).
+  // Em desenvolvimento, o .env fica em backend/.env (fora do frontend).
+  // Empacotado, o backend compilado fica em resources/backend-bin/.env.
+  const candidatos = app.isPackaged
+    ? [path.join(process.resourcesPath, 'backend-bin', '.env')]
+    : [path.join(__dirname, '..', 'backend', '.env')]
+
+  for (const envPath of candidatos) {
+    try {
+      if (!fs.existsSync(envPath)) continue
+      const conteudo = fs.readFileSync(envPath, 'utf-8')
+      const linha = conteudo.split('\n').find((l) => l.startsWith('VORTEX_SYNC_TOKEN='))
+      if (linha) return linha.split('=')[1]?.trim() || null
+    } catch (e) {
+      console.error('Erro ao ler token de sincronizacao em', envPath, e)
+    }
+  }
+  return null
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1100,
@@ -76,7 +98,8 @@ function createWindow() {
   ipcMain.handle('get-sync-info', () => {
     return {
       ip: getLocalIP(),
-      porta: 5000
+      porta: 5000,
+      token: getSyncToken()
     }
   })
 }
