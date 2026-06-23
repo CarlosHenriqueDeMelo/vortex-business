@@ -9,10 +9,10 @@ import { getMeta, setMeta } from '@/database/database';
 import { sincronizar } from '@/sync/syncClient';
 
 const EMPRESA_ID = 1;
-const SYNC_TOKEN = '';
 
 export default function SincronizarScreen() {
   const [ip, setIp] = useState('');
+  const [token, setToken] = useState('');
   const [status, setStatus] = useState<'idle' | 'sincronizando' | 'sucesso' | 'erro'>('idle');
   const [mensagem, setMensagem] = useState('');
 
@@ -20,19 +20,27 @@ export default function SincronizarScreen() {
     getMeta('ultimo_ip').then((salvo) => {
       if (salvo) setIp(salvo);
     });
+    getMeta('sync_token').then((salvo) => {
+      if (salvo) setToken(salvo);
+    });
   }, []);
 
   async function handleSincronizar() {
-    if (!ip.trim()) return;
+    if (!ip.trim() || !token.trim()) {
+      setStatus('erro');
+      setMensagem('Preencha o endereço e o código de acesso');
+      return;
+    }
     setStatus('sincronizando');
     setMensagem('');
 
-    const resultado = await sincronizar(ip.trim(), EMPRESA_ID, SYNC_TOKEN);
+    const resultado = await sincronizar(ip.trim(), EMPRESA_ID, token.trim());
 
     if (resultado.sucesso) {
       setStatus('sucesso');
       setMensagem(`Enviados ${resultado.enviados ?? 0}, recebidos ${resultado.recebidos ?? 0}`);
       await setMeta('ultimo_ip', ip.trim());
+      await setMeta('sync_token', token.trim());
     } else {
       setStatus('erro');
       setMensagem(resultado.mensagem);
@@ -61,11 +69,26 @@ export default function SincronizarScreen() {
             onChangeText={setIp}
             autoCapitalize="none"
             autoCorrect={false}
-            keyboardType="default"
           />
+
+          <ThemedText type="small" style={[styles.label, styles.labelSegundo]}>
+            Código de acesso
+          </ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="Cole o código fornecido no computador"
+            placeholderTextColor={Colors.dark.textSecondary}
+            value={token}
+            onChangeText={setToken}
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry
+          />
+
           <ThemedText type="small" style={styles.hint}>
-            Esse endereço aparece na tela "Sincronização" do programa no computador.
-            Os dois precisam estar na mesma rede Wi-Fi.
+            O endereço e o código aparecem na tela "Sincronização" do programa no
+            computador. Configure uma vez só — os dois precisam estar na mesma rede Wi-Fi
+            no momento de sincronizar.
           </ThemedText>
         </ThemedView>
 
@@ -100,15 +123,16 @@ const styles = StyleSheet.create({
   subtitle: { opacity: 0.6, marginBottom: Spacing.four },
   card: { borderRadius: Spacing.two, padding: Spacing.three, gap: Spacing.two, marginBottom: Spacing.four },
   label: { opacity: 0.6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  labelSegundo: { marginTop: Spacing.two },
   input: {
     color: Colors.dark.text,
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'monospace',
     borderBottomWidth: 1,
     borderBottomColor: Colors.dark.border,
     paddingVertical: Spacing.two,
   },
-  hint: { opacity: 0.4, lineHeight: 18 },
+  hint: { opacity: 0.4, lineHeight: 18, marginTop: Spacing.two },
   btnPrimary: {
     backgroundColor: Colors.dark.primary,
     borderRadius: Spacing.two,
