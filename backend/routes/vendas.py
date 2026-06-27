@@ -49,22 +49,6 @@ def criar_venda():
     conn.close()
     pdf_path = gerar_pdf_venda(venda, itens, empresa, cliente)
     return jsonify({'mensagem': 'Venda registrada com sucesso!', 'venda_id': venda_id, 'pdf': pdf_path}), 201
-@vendas_bp.route('/clientes/<int:id>/pagar-fiado', methods=['POST'])
-def pagar_fiado(id):
-    dados = request.json
-    conn = get_connection()
-    agora = timestamp_atual()
-    conn.execute(
-        'UPDATE clientes SET divida_atual = divida_atual - ?, updated_at = ? WHERE id = ?',
-        (dados['valor'], agora, id)
-    )
-    conn.execute(
-        "UPDATE financeiro SET status = 'pago', updated_at = ? WHERE cliente_id = ? AND status = 'pendente'",
-        (agora, id)
-    )
-    conn.commit()
-    conn.close()
-    return jsonify({'mensagem': 'Fiado marcado como pago!'}), 200
 @vendas_bp.route('/vendas/pdf', methods=['GET'])
 def pdf_vendas_periodo():
     empresa_id = request.args.get('empresa_id')
