@@ -35,6 +35,13 @@ function montarUrlBase(endereco: string): string {
   return `http://${limpo}:5000`;
 }
 
+function normalizarValor(valor: unknown): string | number | null {
+  if (valor === undefined) return null;
+  if (valor === null) return null;
+  if (typeof valor === 'boolean') return valor ? 1 : 0;
+  return valor as string | number;
+}
+
 async function lerRegistrosLocais(tabela: TabelaSync): Promise<Record<string, unknown>[]> {
   const db = await getDb();
   const colunas = ['uuid', 'updated_at', ...COLUNAS[tabela]];
@@ -48,21 +55,24 @@ async function salvarRegistrosRecebidos(tabela: TabelaSync, registros: Record<st
   if (registros.length === 0) return;
   const db = await getDb();
   const colunas = ['uuid', 'updated_at', ...COLUNAS[tabela]];
+  const placeholders = colunas.map(() => '?').join(', ');
+  const updateSets = colunas
+    .filter((c) => c !== 'uuid')
+    .map((c) => `${c} = excluded.${c}`)
+    .join(', ');
 
-  for (const registro of registros) {
-    const valores = colunas.map((c) => registro[c] ?? null);
-    const placeholders = colunas.map(() => '?').join(', ');
-    const updateSets = colunas
-      .filter((c) => c !== 'uuid')
-      .map((c) => `${c} = excluded.${c}`)
-      .join(', ');
-
-    await db.runAsync(
-      `INSERT INTO ${tabela} (${colunas.join(', ')}) VALUES (${placeholders})
+  const sql = `INSERT INTO ${tabela} (${colunas.join(', ')}) VALUES (${placeholders})
        ON CONFLICT(uuid) DO UPDATE SET ${updateSets}
-       WHERE excluded.updated_at > ${tabela}.updated_at`,
-      valores as (string | number | null)[]
-    );
+       WHERE excluded.updated_at > ${tabela}.updated_at`;
+
+  const statement = await db.prepareAsync(sql);
+  try {
+    for (const registro of registros) {
+      const valores = colunas.map((c) => normalizarValor(registro[c]));
+      await statement.executeAsync(valores);
+    }
+  } finally {
+    await statement.finalizeAsync();
   }
 }
 
@@ -126,9 +136,10 @@ export async function sincronizar(
       recebidos: totalRecebidos,
     };
   } catch (e) {
+    const detalhe = e instanceof Error ? e.message : String(e);
     return {
       sucesso: false,
-      mensagem: 'Não foi possível conectar ao computador. Verifique o endereço e a rede Wi-Fi.',
+      mensagem: `Não foi possível sincronizar: ${detalhe}`,
     };
   }
 }
