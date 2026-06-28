@@ -28,12 +28,13 @@ function timestampAtual(): string {
   return new Date().toISOString().slice(0, 19).replace('T', ' ');
 }
 
-/**
- * Registra uma venda completa: cria a venda, os itens, baixa o estoque local,
- * e se for fiado (forma_pagamento === 'Nota'), atualiza a divida do cliente
- * e cria um lancamento financeiro pendente.
- * Tudo dentro de uma transacao - se algo falhar, nada e gravado.
- */
+function normalizarValor(valor: unknown): string | number | null {
+  if (valor === undefined) return null;
+  if (valor === null) return null;
+  if (typeof valor === 'boolean') return valor ? 1 : 0;
+  return valor as string | number;
+}
+
 export async function criarVenda(dados: NovaVenda): Promise<{ vendaUuid: string; total: number }> {
   const db = await getDb();
   const agora = timestampAtual();
@@ -46,7 +47,15 @@ export async function criarVenda(dados: NovaVenda): Promise<{ vendaUuid: string;
     await db.runAsync(
       `INSERT INTO vendas (uuid, empresa_id, cliente_id, forma_pagamento, desconto, total, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [vendaUuid, dados.empresa_id, dados.cliente_uuid, dados.forma_pagamento, dados.desconto ?? 0, total, agora]
+      [
+        normalizarValor(vendaUuid),
+        normalizarValor(dados.empresa_id),
+        normalizarValor(dados.cliente_uuid),
+        normalizarValor(dados.forma_pagamento),
+        normalizarValor(dados.desconto ?? 0),
+        normalizarValor(total),
+        normalizarValor(agora),
+      ]
     );
 
     for (const item of dados.itens) {
@@ -55,19 +64,27 @@ export async function criarVenda(dados: NovaVenda): Promise<{ vendaUuid: string;
       await db.runAsync(
         `INSERT INTO itens_venda (uuid, venda_id, produto_id, quantidade, preco_unitario, subtotal, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [itemUuid, vendaUuid, item.produto_uuid, item.quantidade, item.preco_unitario, subtotal, agora]
+        [
+          normalizarValor(itemUuid),
+          normalizarValor(vendaUuid),
+          normalizarValor(item.produto_uuid),
+          normalizarValor(item.quantidade),
+          normalizarValor(item.preco_unitario),
+          normalizarValor(subtotal),
+          normalizarValor(agora),
+        ]
       );
 
       await db.runAsync(
         `UPDATE produtos SET quantidade = quantidade - ?, updated_at = ? WHERE uuid = ?`,
-        [item.quantidade, agora, item.produto_uuid]
+        [normalizarValor(item.quantidade), normalizarValor(agora), normalizarValor(item.produto_uuid)]
       );
     }
 
     if (dados.forma_pagamento === 'Nota' && dados.cliente_uuid) {
       await db.runAsync(
         `UPDATE clientes SET divida_atual = divida_atual + ?, updated_at = ? WHERE uuid = ?`,
-        [total, agora, dados.cliente_uuid]
+        [normalizarValor(total), normalizarValor(agora), normalizarValor(dados.cliente_uuid)]
       );
 
       const financeiroUuid = gerarUuid();
@@ -79,7 +96,16 @@ export async function criarVenda(dados: NovaVenda): Promise<{ vendaUuid: string;
       await db.runAsync(
         `INSERT INTO financeiro (uuid, empresa_id, cliente_id, venda_id, descricao, tipo, valor, vencimento, status, updated_at)
          VALUES (?, ?, ?, ?, ?, 'receber', ?, ?, 'pendente', ?)`,
-        [financeiroUuid, dados.empresa_id, dados.cliente_uuid, vendaUuid, `Fiado venda ${vendaUuid.slice(0, 8)}`, total, vencimento, agora]
+        [
+          normalizarValor(financeiroUuid),
+          normalizarValor(dados.empresa_id),
+          normalizarValor(dados.cliente_uuid),
+          normalizarValor(vendaUuid),
+          normalizarValor(`Fiado venda ${vendaUuid.slice(0, 8)}`),
+          normalizarValor(total),
+          normalizarValor(vencimento),
+          normalizarValor(agora),
+        ]
       );
     }
   });
