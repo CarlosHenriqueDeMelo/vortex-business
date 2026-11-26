@@ -4,7 +4,7 @@ produtos_bp = Blueprint('produtos', __name__)
 @produtos_bp.route('/produtos', methods=['GET'])
 def listar_produtos():
     conn = get_connection()
-    produtos = conn.execute('SELECT * FROM produtos').fetchall()
+    produtos = conn.execute('SELECT * FROM produtos WHERE deleted_at IS NULL').fetchall()
     conn.close()
     return jsonify([dict(c) for c in produtos])
 @produtos_bp.route('/produtos', methods=['POST'])
@@ -32,7 +32,8 @@ def editar_produto(id):
 @produtos_bp.route('/produtos/<int:id>', methods=['DELETE'])
 def deletar_produto(id):
     conn = get_connection()
-    conn.execute('DELETE FROM produtos WHERE id = ?', (id,))
+    agora = timestamp_atual()
+    conn.execute('UPDATE produtos SET deleted_at = ?, updated_at = ? WHERE id = ?', (agora, agora, id))
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Produto deletado com sucesso!'}), 200
@@ -41,7 +42,7 @@ def pdf_estoque():
     empresa_id = request.args.get('empresa_id')
     conn = get_connection()
     empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
-    produtos = conn.execute('SELECT * FROM produtos WHERE empresa_id = ?', (empresa_id,)).fetchall()
+    produtos = conn.execute('SELECT * FROM produtos WHERE empresa_id = ? AND deleted_at IS NULL', (empresa_id,)).fetchall()
     conn.close()
     from pdf_generator import gerar_pdf_estoque
     pdf_path = gerar_pdf_estoque(empresa, [dict(p) for p in produtos])

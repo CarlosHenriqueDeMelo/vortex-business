@@ -4,7 +4,7 @@ fornecedores_bp = Blueprint('fornecedores', __name__)
 @fornecedores_bp.route('/fornecedores', methods=['GET'])
 def listar_fornecedores():
     conn = get_connection()
-    fornecedores = conn.execute('SELECT * FROM fornecedores').fetchall()
+    fornecedores = conn.execute('SELECT * FROM fornecedores WHERE deleted_at IS NULL').fetchall()
     conn.close()
     return jsonify([dict(c) for c in fornecedores])
 @fornecedores_bp.route('/fornecedores', methods=['POST'])
@@ -21,7 +21,8 @@ def criar_fornecedores():
 @fornecedores_bp.route('/fornecedores/<int:id>', methods=['DELETE'])
 def deletar_fornecedor(id):
     conn = get_connection()
-    conn.execute('DELETE FROM fornecedores WHERE id = ?', (id,))
+    agora = timestamp_atual()
+    conn.execute('UPDATE fornecedores SET deleted_at = ?, updated_at = ? WHERE id = ?', (agora, agora, id))
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Fornecedor deletado com sucesso!'}), 200

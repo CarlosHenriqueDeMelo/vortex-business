@@ -6,7 +6,7 @@ clientes_bp = Blueprint('clientes', __name__)
 @clientes_bp.route('/clientes', methods=['GET'])
 def listar_clientes():
     conn = get_connection()
-    clientes = conn.execute('SELECT * FROM clientes').fetchall()
+    clientes = conn.execute('SELECT * FROM clientes WHERE deleted_at IS NULL').fetchall()
     conn.close()
     return jsonify([dict(c) for c in clientes])
 
@@ -26,7 +26,8 @@ def criar_clientes():
 @clientes_bp.route('/clientes/<int:id>', methods=['DELETE'])
 def deletar_clientes(id):
     conn = get_connection()
-    conn.execute('DELETE FROM clientes WHERE id = ?', (id,))
+    agora = timestamp_atual()
+    conn.execute('UPDATE clientes SET deleted_at = ?, updated_at = ? WHERE id = ?', (agora, agora, id))
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Cliente deletado com sucesso!'}), 200
@@ -37,7 +38,7 @@ def pagar_fiado(id):
     conn = get_connection()
     agora = timestamp_atual()
     conn.execute(
-        'UPDATE clientes SET divida_atual = divida_atual - ?, updated_at = ? WHERE id = ?',
+        'UPDATE clientes SET divida_atual = MAX(0, divida_atual - ?), updated_at = ? WHERE id = ?',
         (dados['valor'], agora, id)
     )
     conn.execute(
@@ -103,7 +104,7 @@ def pdf_clientes_fiado():
     empresa_id = request.args.get('empresa_id')
     conn = get_connection()
     empresa = dict(conn.execute('SELECT * FROM empresas WHERE id = ?', (empresa_id,)).fetchone())
-    clientes = conn.execute('SELECT * FROM clientes WHERE empresa_id = ? AND divida_atual > 0', (empresa_id,)).fetchall()
+    clientes = conn.execute('SELECT * FROM clientes WHERE empresa_id = ? AND divida_atual > 0 AND deleted_at IS NULL', (empresa_id,)).fetchall()
     conn.close()
     from pdf_generator import gerar_pdf_clientes_fiado
     pdf_path = gerar_pdf_clientes_fiado(empresa, [dict(c) for c in clientes])
