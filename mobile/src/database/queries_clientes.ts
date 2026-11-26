@@ -1,7 +1,5 @@
-import { getDb } from './database';
+import { getDb, getEmpresaId } from './database';
 import { gerarUuid, normalizarValor, timestampAtual } from './queries_venda';
-
-const EMPRESA_ID = 1;
 
 export type NovoCliente = {
   nome: string;
@@ -13,12 +11,13 @@ export type NovoCliente = {
 export async function criarCliente(dados: NovoCliente): Promise<string> {
   const db = await getDb();
   const uuid = gerarUuid();
+  const empresaId = await getEmpresaId();
   await db.runAsync(
     `INSERT INTO clientes (uuid, empresa_id, nome, telefone, cidade, total_compras, total_gasto, divida_atual, ativo, updated_at)
      VALUES (?, ?, ?, ?, ?, 0, 0, 0, 1, ?)`,
     [
       normalizarValor(uuid),
-      EMPRESA_ID,
+      empresaId,
       normalizarValor(dados.nome.trim()),
       normalizarValor(dados.telefone?.trim() || null),
       normalizarValor(dados.cidade?.trim() || null),

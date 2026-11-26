@@ -8,8 +8,6 @@ import { Colors, Spacing } from '@/constants/theme';
 import { getMeta, setMeta } from '@/database/database';
 import { sincronizar } from '@/sync/syncClient';
 
-const EMPRESA_ID = 1;
-
 export default function SincronizarScreen() {
   const [ip, setIp] = useState('');
   const [token, setToken] = useState('');
@@ -34,7 +32,7 @@ export default function SincronizarScreen() {
     setStatus('sincronizando');
     setMensagem('');
 
-    const resultado = await sincronizar(ip.trim(), EMPRESA_ID, token.trim());
+    const resultado = await sincronizar(ip.trim(), token.trim());
 
     if (resultado.sucesso) {
       setStatus('sucesso');

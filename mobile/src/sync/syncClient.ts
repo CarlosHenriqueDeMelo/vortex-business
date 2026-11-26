@@ -1,4 +1,4 @@
-import { getDb, getMeta, setMeta } from '../database/database';
+import { getDb, getEmpresaId, getMeta, setMeta } from '../database/database';
 
 const TABELAS_SYNC = [
   'clientes',
@@ -13,13 +13,13 @@ const TABELAS_SYNC = [
 type TabelaSync = (typeof TABELAS_SYNC)[number];
 
 const COLUNAS: Record<TabelaSync, string[]> = {
-  clientes: ['empresa_id', 'nome', 'telefone', 'cidade', 'regiao', 'total_compras', 'total_gasto', 'divida_atual', 'ativo', 'documento'],
-  produtos: ['empresa_id', 'nome', 'categoria', 'unidade', 'preco_custo', 'preco_venda', 'quantidade', 'quantidade_minima'],
-  fornecedores: ['empresa_id', 'nome', 'categoria', 'telefone', 'email', 'ativo'],
-  entradas_estoque: ['empresa_id', 'produto_id', 'fornecedor_id', 'quantidade', 'preco_custo', 'forma_pagamento', 'observacao'],
-  vendas: ['empresa_id', 'cliente_id', 'forma_pagamento', 'desconto', 'total', 'cidade', 'telefone', 'observacao', 'pdf_gerado'],
-  itens_venda: ['venda_id', 'produto_id', 'quantidade', 'preco_unitario', 'subtotal'],
-  financeiro: ['empresa_id', 'descricao', 'tipo', 'valor', 'vencimento', 'status', 'venda_id', 'cliente_id'],
+  clientes: ['empresa_id', 'nome', 'telefone', 'cidade', 'regiao', 'total_compras', 'total_gasto', 'divida_atual', 'ativo', 'documento', 'deleted_at'],
+  produtos: ['empresa_id', 'nome', 'categoria', 'unidade', 'preco_custo', 'preco_venda', 'quantidade', 'quantidade_minima', 'deleted_at'],
+  fornecedores: ['empresa_id', 'nome', 'categoria', 'telefone', 'email', 'ativo', 'deleted_at'],
+  entradas_estoque: ['empresa_id', 'produto_id', 'fornecedor_id', 'quantidade', 'preco_custo', 'forma_pagamento', 'observacao', 'deleted_at'],
+  vendas: ['empresa_id', 'cliente_id', 'forma_pagamento', 'desconto', 'total', 'cidade', 'telefone', 'observacao', 'pdf_gerado', 'deleted_at'],
+  itens_venda: ['venda_id', 'produto_id', 'quantidade', 'preco_unitario', 'subtotal', 'deleted_at'],
+  financeiro: ['empresa_id', 'descricao', 'tipo', 'valor', 'vencimento', 'status', 'venda_id', 'cliente_id', 'deleted_at'],
 };
 
 export type ResultadoSync = {
@@ -40,6 +40,22 @@ function normalizarValor(valor: unknown): string | number | null {
   if (valor === null) return null;
   if (typeof valor === 'boolean') return valor ? 1 : 0;
   return valor as string | number;
+}
+
+function dataLocalStr(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+/** fetch que desiste depois de alguns segundos (evita a tela travada em "sincronizando"). */
+async function fetchComTimeout(url: string, opcoes: RequestInit = {}, ms = 30000): Promise<Response> {
+  const controle = new AbortController();
+  const timer = setTimeout(() => controle.abort(), ms);
+  try {
+    return await fetch(url, { ...opcoes, signal: controle.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function lerRegistrosLocais(tabela: TabelaSync): Promise<Record<string, unknown>[]> {
@@ -76,15 +92,28 @@ async function salvarRegistrosRecebidos(tabela: TabelaSync, registros: Record<st
   }
 }
 
-export async function sincronizar(
-  endereco: string,
-  empresaId: number,
-  token: string
-): Promise<ResultadoSync> {
+export async function sincronizar(endereco: string, token: string): Promise<ResultadoSync> {
   const urlBase = montarUrlBase(endereco);
   const ultimaSync = (await getMeta('ultima_sincronizacao')) ?? '1970-01-01 00:00:00';
+  // Hora local (igual ao updated_at do desktop) com 2 min de folga para diferenca entre relogios.
+  const inicioSync = dataLocalStr(new Date(Date.now() - 2 * 60 * 1000));
 
   try {
+    const respEmp = await fetchComTimeout(`${urlBase}/sync/empresas`, { headers: { 'X-Sync-Token': token } }, 15000);
+    if (respEmp.status === 401) {
+      return { sucesso: false, mensagem: 'Código de acesso incorreto. Confira no computador.' };
+    }
+    if (!respEmp.ok) {
+      return { sucesso: false, mensagem: `O computador respondeu com erro (${respEmp.status})` };
+    }
+    const empresas: { id: number; nome: string }[] = await respEmp.json();
+    if (empresas.length === 0) {
+      return { sucesso: false, mensagem: 'Nenhuma empresa cadastrada no computador' };
+    }
+    const salva = await getEmpresaId();
+    const empresaId = empresas.some((e) => e.id === salva) ? salva : empresas[0].id;
+    await setMeta('empresa_id', String(empresaId));
+
     const dadosPush: Record<string, Record<string, unknown>[]> = {};
     let totalEnviados = 0;
     for (const tabela of TABELAS_SYNC) {
@@ -93,14 +122,14 @@ export async function sincronizar(
       totalEnviados += registros.length;
     }
 
-    const respPush = await fetch(`${urlBase}/sync/push`, {
+    const respPush = await fetchComTimeout(`${urlBase}/sync/push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Sync-Token': token,
       },
       body: JSON.stringify({ empresa_id: empresaId, dados: dadosPush }),
-    });
+    }, 60000);
 
     if (!respPush.ok) {
       const erro = await respPush.json().catch(() => ({ mensagem: 'Erro desconhecido' }));
@@ -108,9 +137,9 @@ export async function sincronizar(
     }
 
     const params = new URLSearchParams({ empresa_id: String(empresaId), desde: ultimaSync });
-    const respPull = await fetch(`${urlBase}/sync/pull?${params.toString()}`, {
+    const respPull = await fetchComTimeout(`${urlBase}/sync/pull?${params.toString()}`, {
       headers: { 'X-Sync-Token': token },
-    });
+    }, 60000);
 
     if (!respPull.ok) {
       const erro = await respPull.json().catch(() => ({ mensagem: 'Erro desconhecido' }));
@@ -125,8 +154,7 @@ export async function sincronizar(
       totalRecebidos += registros.length;
     }
 
-    const agora = new Date().toISOString();
-    await setMeta('ultima_sincronizacao', agora);
+    await setMeta('ultima_sincronizacao', inicioSync);
     await setMeta('ultimo_ip', endereco);
 
     return {
@@ -136,7 +164,10 @@ export async function sincronizar(
       recebidos: totalRecebidos,
     };
   } catch (e) {
-    const detalhe = e instanceof Error ? e.message : String(e);
+    const abortou = e instanceof Error && e.name === 'AbortError';
+    const detalhe = abortou
+      ? 'o computador não respondeu a tempo (confira se o app está aberto e o endereço)'
+      : e instanceof Error ? e.message : String(e);
     return {
       sucesso: false,
       mensagem: `Não foi possível sincronizar: ${detalhe}`,

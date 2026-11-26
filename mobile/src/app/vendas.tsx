@@ -13,10 +13,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
+import { getEmpresaId } from '@/database/database';
 import { criarVenda, type ItemCarrinho } from '@/database/queries_venda';
 import { listarClientes, listarProdutos, type Cliente, type Produto } from '@/database/queries';
 
-const EMPRESA_ID = 1;
 const FORMAS_PAGAMENTO = ['Dinheiro', 'Pix', 'Cartão', 'Nota'] as const;
 
 export default function VendasScreen() {
@@ -71,7 +71,7 @@ export default function VendasScreen() {
   const total = carrinho.reduce((soma, item) => soma + item.quantidade * item.preco_unitario, 0);
 
   async function finalizarVenda() {
-    if (carrinho.length === 0) return;
+    if (carrinho.length === 0 || status === 'salvando') return;
     if (formaPagamento === 'Nota' && !clienteSelecionado) {
       setStatus('erro');
       setMensagemErro('Venda fiado (Nota) precisa de um cliente selecionado');
@@ -81,7 +81,7 @@ export default function VendasScreen() {
     setStatus('salvando');
     try {
       await criarVenda({
-        empresa_id: EMPRESA_ID,
+        empresa_id: await getEmpresaId(),
         cliente_uuid: clienteSelecionado?.uuid ?? null,
         forma_pagamento: formaPagamento,
         itens: carrinho,

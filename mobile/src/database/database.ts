@@ -133,6 +133,13 @@ export async function getMeta(chave: string): Promise<string | null> {
   return row?.valor ?? null;
 }
 
+/** Empresa sincronizada (definida na primeira sincronizacao). Padrao 1. */
+export async function getEmpresaId(): Promise<number> {
+  const salvo = await getMeta('empresa_id');
+  const n = salvo ? parseInt(salvo, 10) : NaN;
+  return Number.isFinite(n) ? n : 1;
+}
+
 /** Salva um valor simples de configuracao */
 export async function setMeta(chave: string, valor: string): Promise<void> {
   const db = await getDb();
