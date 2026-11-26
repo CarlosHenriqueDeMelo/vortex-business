@@ -5,6 +5,17 @@ const fs = require('fs')
 const os = require('os')
 let backendProcess = null
 
+// Linux: forca X11 (evita tela preta/erros em alguns Wayland). Substitui o GDK_BACKEND do npm start.
+if (process.platform === 'linux') app.commandLine.appendSwitch('ozone-platform', 'x11')
+
+function getAppDataDir() {
+  // Mesma pasta usada pelo backend (database.get_app_data_dir)
+  if (process.platform === 'win32') {
+    return path.join(process.env.APPDATA || os.homedir(), 'VortexBusiness')
+  }
+  return path.join(os.homedir(), '.vortex-business')
+}
+
 function getBackendPath() {
   const exeName = process.platform === 'win32' ? 'vortex-backend.exe' : 'vortex-backend'
   if (app.isPackaged) {
@@ -52,19 +63,30 @@ function getSyncToken() {
   // de dependencia extra no Electron (so um parser simples de uma linha).
   // Em desenvolvimento, o .env fica em backend/.env (fora do frontend).
   // Empacotado, o backend compilado fica em resources/backend-bin/.env.
-  const candidatos = app.isPackaged
-    ? [path.join(process.resourcesPath, 'backend-bin', '.env')]
-    : [path.join(__dirname, '..', 'backend', '.env')]
+  // Prioridade igual a do backend: .env (desenvolvimento) e, se nao houver,
+  // o arquivo sync_token que o backend cria sozinho na pasta de dados.
+  const candidatos = [
+    app.isPackaged
+      ? path.join(process.resourcesPath, 'backend-bin', '.env')
+      : path.join(__dirname, '..', 'backend', '.env')
+  ]
 
   for (const envPath of candidatos) {
     try {
       if (!fs.existsSync(envPath)) continue
       const conteudo = fs.readFileSync(envPath, 'utf-8')
-      const linha = conteudo.split('\n').find((l) => l.startsWith('VORTEX_SYNC_TOKEN='))
-      if (linha) return linha.split('=')[1]?.trim() || null
+      const linha = conteudo.split(/\r?\n/).find((l) => l.startsWith('VORTEX_SYNC_TOKEN='))
+      const valor = linha && linha.slice('VORTEX_SYNC_TOKEN='.length).trim()
+      if (valor) return valor
     } catch (e) {
       console.error('Erro ao ler token de sincronizacao em', envPath, e)
     }
+  }
+  try {
+    const arquivo = path.join(getAppDataDir(), 'sync_token')
+    if (fs.existsSync(arquivo)) return fs.readFileSync(arquivo, 'utf-8').trim() || null
+  } catch (e) {
+    console.error('Erro ao ler sync_token', e)
   }
   return null
 }

@@ -54,6 +54,8 @@ app.register_blueprint(entrada_bp)
 app.register_blueprint(sync_bp)
 
 inicializar_banco()
+from database.sync_auth import obter_token
+obter_token()  # garante que o token de sincronizacao exista desde a primeira execucao
 
 @app.errorhandler(500)
 def erro_interno(e):

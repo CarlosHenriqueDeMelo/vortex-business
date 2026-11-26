@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <title>Vortex Business</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link rel="stylesheet" href="../assets/tabler/tabler-icons.min.css"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -449,7 +449,7 @@
       const info = await ipcRenderer.invoke("get-sync-info")
       if (info && info.ip) {
         ipEl.textContent = info.ip + ":" + info.porta
-        if (tokenEl) tokenEl.textContent = info.token || "Não configurado no .env"
+        if (tokenEl) tokenEl.textContent = info.token || "Reinicie o aplicativo"
         statusEl.textContent = "Pronto para sincronizar"
         dotEl.classList.remove("off")
       } else {
