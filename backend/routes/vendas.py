@@ -10,7 +10,13 @@ def listar_vendas():
     return jsonify([dict(c) for c in vendas])
 @vendas_bp.route('/vendas', methods=['POST'])
 def criar_venda():
-    dados = request.json
+    dados = request.get_json(silent=True) or {}
+    itens = dados.get('itens') or []
+    if not itens:
+        return jsonify({'mensagem': 'A venda precisa ter ao menos um item'}), 400
+    for item in itens:
+        if not (item.get('quantidade') or 0) > 0 or (item.get('preco_unitario') or 0) < 0:
+            return jsonify({'mensagem': 'Quantidade ou preco invalido em um item'}), 400
     conn = get_connection()
     agora = timestamp_atual()
     cursor = conn.execute(
@@ -18,7 +24,6 @@ def criar_venda():
         (dados['empresa_id'], dados.get('cliente_id'), dados['forma_pagamento'], dados.get('desconto', 0), dados['total'], dados.get('cidade'), dados.get('telefone'), dados.get('observacao'), gerar_uuid(), agora)
     )
     venda_id = cursor.lastrowid
-    itens = dados.get('itens', [])
     for item in itens:
         conn.execute(
             'INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario, subtotal, uuid, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -47,7 +52,13 @@ def criar_venda():
         if row:
             cliente = dict(row)
     conn.close()
-    pdf_path = gerar_pdf_venda(venda, itens, empresa, cliente)
+    try:
+        pdf_path = gerar_pdf_venda(venda, itens, empresa, cliente)
+    except Exception:
+        # a venda ja foi gravada; falha no PDF nao pode gerar erro (senao o usuario repete a venda)
+        import logging
+        logging.exception('Falha ao gerar PDF da venda %s', venda_id)
+        pdf_path = None
     return jsonify({'mensagem': 'Venda registrada com sucesso!', 'venda_id': venda_id, 'pdf': pdf_path}), 201
 @vendas_bp.route('/vendas/pdf', methods=['GET'])
 def pdf_vendas_periodo():
