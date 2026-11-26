@@ -364,18 +364,25 @@
     }
   }
 
+  // Data local no formato YYYY-MM-DD (toISOString usa UTC e adianta o dia
+  // a partir das 21h no fuso UTC-3, o que escondia as vendas de "hoje").
+  function dataLocalStr(d) {
+    const p = n => String(n).padStart(2, '0')
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+  }
+
   function getDateRange() {
     const hoje = new Date()
-    const hojeStr = hoje.toISOString().split('T')[0]
+    const hojeStr = dataLocalStr(hoje)
     if (periodoAtual === 'hoje') return { inicio: hojeStr, fim: hojeStr }
     if (periodoAtual === 'semana') {
       const inicio = new Date(hoje)
       inicio.setDate(hoje.getDate() - 7)
-      return { inicio: inicio.toISOString().split('T')[0], fim: hojeStr }
+      return { inicio: dataLocalStr(inicio), fim: hojeStr }
     }
     if (periodoAtual === 'mes') {
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-      return { inicio: inicio.toISOString().split('T')[0], fim: hojeStr }
+      return { inicio: dataLocalStr(inicio), fim: hojeStr }
     }
     if (periodoAtual === 'personalizado') {
       return {
@@ -389,7 +396,7 @@
   async function verificarFiados() {
     const res = await fetch(`${API}/financeiro`)
     const lancamentos = await res.json()
-    const hoje = new Date().toISOString().split('T')[0]
+    const hoje = dataLocalStr(new Date())
     const fiados = lancamentos.filter(f =>
       f.empresa_id == empresa.id &&
       f.tipo === 'receber' &&
@@ -500,12 +507,12 @@
 
   function getIntervaloPeriodo(valor) {
     const hoje = new Date()
-    const hojeStr = hoje.toISOString().split('T')[0]
+    const hojeStr = dataLocalStr(hoje)
     if (valor === 'hoje') return { inicio: hojeStr, fim: hojeStr }
     if (valor === '7' || valor === '30' || valor === '60') {
       const d = new Date(hoje)
       d.setDate(hoje.getDate() - parseInt(valor))
-      return { inicio: d.toISOString().split('T')[0], fim: hojeStr }
+      return { inicio: dataLocalStr(d), fim: hojeStr }
     }
     if (valor === 'todos') return { inicio: null, fim: null }
     if (valor === 'personalizado') {
