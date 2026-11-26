@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <title>Nova Venda — Vortex</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link rel="stylesheet" href="../assets/tabler/tabler-icons.min.css"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -345,7 +345,7 @@
       const data = await res.json()
       if (res.ok) {
         const { shell } = require('electron')
-        shell.openPath(data.pdf)
+        if (data.pdf) shell.openPath(data.pdf)
         window.location.href = 'dashboard.html'
       } else {
         document.getElementById('errMsg').textContent = data.mensagem || 'Erro ao registrar venda.'

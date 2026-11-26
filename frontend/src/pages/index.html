@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vortex Business</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link rel="stylesheet" href="../assets/tabler/tabler-icons.min.css"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0d0d0f; font-family: 'Segoe UI', sans-serif; color: #fff; height: 100vh; display: flex; flex-direction: column; user-select: none; }
@@ -160,7 +160,7 @@
         localStorage.setItem('empresa', JSON.stringify(data.empresa))
         window.location.href = 'dashboard.html'
       } else {
-        document.getElementById('errMsg').textContent = 'Senha incorreta.'
+        document.getElementById('errMsg').textContent = data.mensagem || 'Senha incorreta.'
         document.getElementById('pinInput').value = ''
         updateDots('')
       }
