@@ -26,6 +26,10 @@ FK = {
 FK_OBRIGATORIA = {('entradas_estoque', 'produto_id'), ('itens_venda', 'venda_id'), ('itens_venda', 'produto_id')}
 
 
+# Registros criados no celular nao tem data propria: usa o updated_at (momento da venda/entrada).
+COLUNA_DATA = {'vendas': 'data_venda', 'entradas_estoque': 'data_entrada'}
+
+
 def uuid_para_id(conn, tabela, uuid_valor):
     if uuid_valor in (None, ''):
         return None
@@ -60,9 +64,13 @@ def upsert_registro(conn, tabela, registro):
     recebido = registro.get('updated_at') or timestamp_atual()
 
     if existente is None:
-        nomes = ', '.join(colunas + ['uuid', 'updated_at'])
-        marcas = ', '.join(['?'] * (len(colunas) + 2))
-        conn.execute(f"INSERT INTO {tabela} ({nomes}) VALUES ({marcas})", valores + [uuid_registro, recebido])
+        extras, extras_val = ['uuid', 'updated_at'], [uuid_registro, recebido]
+        if tabela in COLUNA_DATA:
+            extras.append(COLUNA_DATA[tabela])
+            extras_val.append(recebido)
+        nomes = ', '.join(colunas + extras)
+        marcas = ', '.join(['?'] * (len(colunas) + len(extras)))
+        conn.execute(f"INSERT INTO {tabela} ({nomes}) VALUES ({marcas})", valores + extras_val)
     elif recebido > (existente['updated_at'] or ''):
         sets = ', '.join([f"{c} = ?" for c in colunas])
         conn.execute(f"UPDATE {tabela} SET {sets}, updated_at = ? WHERE uuid = ?", valores + [recebido, uuid_registro])
