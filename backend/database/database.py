@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import hashlib
+import hmac
 import uuid as uuid_lib
 
 def get_app_data_dir():
@@ -19,8 +20,31 @@ def get_connection():
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
+_PBKDF2_ITER = 200_000
+
 def hash_senha(senha):
-    return hashlib.sha256(senha.encode()).hexdigest()
+    """Hash com salt aleatorio (PBKDF2-SHA256). Formato: pbkdf2$iter$salt$hash"""
+    salt = os.urandom(16).hex()
+    h = hashlib.pbkdf2_hmac('sha256', senha.encode(), bytes.fromhex(salt), _PBKDF2_ITER).hex()
+    return f"pbkdf2${_PBKDF2_ITER}${salt}${h}"
+
+def verificar_senha(senha, armazenado):
+    """Confere a senha. Aceita o formato novo e o antigo (sha256 puro)."""
+    if not armazenado:
+        return False
+    if armazenado.startswith('pbkdf2$'):
+        try:
+            _, it, salt, h = armazenado.split('$')
+            calc = hashlib.pbkdf2_hmac('sha256', senha.encode(), bytes.fromhex(salt), int(it)).hex()
+            return hmac.compare_digest(calc, h)
+        except (ValueError, TypeError):
+            return False
+    antigo = hashlib.sha256(senha.encode()).hexdigest()
+    return hmac.compare_digest(antigo, armazenado)
+
+def hash_legado(armazenado):
+    """True se o hash ainda esta no formato antigo e deve ser regravado."""
+    return bool(armazenado) and not armazenado.startswith('pbkdf2$')
 
 def gerar_uuid():
     """Gera um UUID novo para um registro. Usar sempre que criar empresa, produto, cliente, venda, etc."""

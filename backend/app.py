@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from database.database import inicializar_banco
 from routes.empresas import empresas_bp
@@ -22,6 +22,26 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024  # sync completo cabe folgado
+
+LOCAIS = ('127.0.0.1', '::1', '::ffff:127.0.0.1')
+
+@app.before_request
+def proteger_api():
+    """O servidor escuta na rede (para o celular sincronizar), entao:
+    - de outro aparelho so e permitido /sync/*, e as rotas exigem o token;
+    - do proprio PC, bloqueia paginas web externas (Origin http/https)."""
+    if request.method == 'OPTIONS':
+        return None
+    if request.remote_addr not in LOCAIS:
+        if not request.path.startswith('/sync/'):
+            return jsonify({'mensagem': 'Acesso negado'}), 403
+        return None
+    origem = request.headers.get('Origin')
+    if origem and origem.startswith(('http://', 'https://')) and not origem.startswith(('http://127.0.0.1', 'http://localhost')):
+        return jsonify({'mensagem': 'Origem nao permitida'}), 403
+    return None
+
 CORS(app)
 
 app.register_blueprint(empresas_bp)
