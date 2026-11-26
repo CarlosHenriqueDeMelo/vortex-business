@@ -52,10 +52,19 @@ npx expo start
 
 ## Roadmap
 
-- [ ] Corrigir filtro "Hoje" no Windows (gerar timestamps em Python)
 - [ ] Testes automatizados
 - [ ] Hardening da API (validação de entrada, rate limiting)
 
 ## Licença
 
 Veja `mobile/LICENSE`.
+
+## Gerar instaladores
+
+```bash
+# Linux: ./scripts/build-backend.sh && cd frontend && npm install && npm run build:linux
+# Windows: scripts\build-backend.bat  &&  cd frontend && npm install && npm run build:win
+```
+
+Celular (Android 7.0+): `cd mobile && npx expo prebuild --platform android && npx expo run:android --variant release`.
+Na rede local o celular usa HTTP; no Windows, libere o Vortex no firewall quando o aviso aparecer.
