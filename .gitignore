@@ -15,3 +15,7 @@ frontend/backend-bin/
 backend/logs/
 .env
 backend/.env
+
+# gerados / temporarios
+backend/venda_*.pdf
+tempCodeRunnerFile.py
