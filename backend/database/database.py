@@ -247,3 +247,23 @@ def inicializar_banco():
 
 if __name__ == '__main__':
     inicializar_banco()
+
+
+def fazer_backup(manter=7):
+    """Copia o banco para a pasta backups (1 por dia, mantendo os ultimos `manter`)."""
+    import datetime
+    pasta = os.path.join(get_app_data_dir(), 'backups')
+    os.makedirs(pasta, exist_ok=True)
+    destino = os.path.join(pasta, f"vortex_{datetime.date.today().isoformat()}.db")
+    if os.path.exists(destino) or not os.path.exists(DB_PATH):
+        return
+    origem = sqlite3.connect(DB_PATH)
+    copia = sqlite3.connect(destino)
+    try:
+        origem.backup(copia)  # copia consistente, mesmo com o banco em uso
+    finally:
+        copia.close()
+        origem.close()
+    antigos = sorted(f for f in os.listdir(pasta) if f.startswith('vortex_') and f.endswith('.db'))
+    for f in antigos[:-manter]:
+        os.remove(os.path.join(pasta, f))

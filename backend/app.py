@@ -53,6 +53,11 @@ app.register_blueprint(financeiro_bp)
 app.register_blueprint(entrada_bp)
 app.register_blueprint(sync_bp)
 
+from database.database import fazer_backup
+try:
+    fazer_backup()  # backup diario antes de qualquer migracao/uso
+except Exception:
+    logging.exception('Falha no backup diario')
 inicializar_banco()
 from database.sync_auth import obter_token
 obter_token()  # garante que o token de sincronizacao exista desde a primeira execucao
