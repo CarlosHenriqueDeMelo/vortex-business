@@ -9,6 +9,7 @@ def fmt(valor):
 def gerar_pdf_venda(venda, itens, empresa, cliente=None):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
     os.makedirs(downloads, exist_ok=True)
+    os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"venda_{venda['id']}.pdf")
 
     c = canvas.Canvas(nome_arquivo, pagesize=A4)
@@ -95,6 +96,7 @@ def gerar_pdf_venda(venda, itens, empresa, cliente=None):
 
 def gerar_pdf_cliente(cliente, fiados, empresa):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    os.makedirs(downloads, exist_ok=True)
     os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"fiado_cliente_{cliente['id']}.pdf")
 
@@ -199,6 +201,7 @@ def gerar_pdf_cliente(cliente, fiados, empresa):
 def gerar_pdf_estoque(empresa, produtos):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
     os.makedirs(downloads, exist_ok=True)
+    os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"posicao_estoque_{empresa['id']}.pdf")
 
     c = canvas.Canvas(nome_arquivo, pagesize=A4)
@@ -267,6 +270,7 @@ def gerar_pdf_estoque(empresa, produtos):
 
 def gerar_pdf_financeiro(empresa, lancamentos, inicio=None, fim=None):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    os.makedirs(downloads, exist_ok=True)
     os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"relatorio_financeiro_{empresa['id']}.pdf")
 
@@ -351,6 +355,7 @@ def gerar_pdf_financeiro(empresa, lancamentos, inicio=None, fim=None):
 def gerar_pdf_vendas_periodo(empresa, vendas, inicio=None, fim=None):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
     os.makedirs(downloads, exist_ok=True)
+    os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"vendas_periodo_{empresa['id']}.pdf")
 
     c = canvas.Canvas(nome_arquivo, pagesize=A4)
@@ -429,6 +434,7 @@ def gerar_pdf_vendas_periodo(empresa, vendas, inicio=None, fim=None):
 
 def gerar_pdf_clientes_fiado(empresa, clientes):
     downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    os.makedirs(downloads, exist_ok=True)
     os.makedirs(downloads, exist_ok=True)
     nome_arquivo = os.path.join(downloads, f"clientes_fiado_{empresa['id']}.pdf")
 
