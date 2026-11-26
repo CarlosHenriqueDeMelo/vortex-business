@@ -16,7 +16,7 @@ export type NovaVenda = {
   diasPrazo?: number;
 };
 
-function gerarUuid(): string {
+export function gerarUuid(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -24,11 +24,15 @@ function gerarUuid(): string {
   });
 }
 
-function timestampAtual(): string {
-  return new Date().toISOString().slice(0, 19).replace('T', ' ');
+export function timestampAtual(): string {
+  // Hora LOCAL, igual ao desktop (datetime('now','localtime')), para o
+  // 'newer updated_at wins' da sincronizacao comparar na mesma referencia.
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-function normalizarValor(valor: unknown): string | number | null {
+export function normalizarValor(valor: unknown): string | number | null {
   if (valor === undefined) return null;
   if (valor === null) return null;
   if (typeof valor === 'boolean') return valor ? 1 : 0;
