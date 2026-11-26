@@ -103,6 +103,9 @@
   </div>
 
   <script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+  const jsArg = s => esc(JSON.stringify(String(s ?? '')))
+
     const API = 'http://127.0.0.1:5000'
     const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
     let produtoSelecionadoId = null
@@ -135,7 +138,7 @@
       if (!filtrados.length) { list.style.display = 'none'; return; }
       list.innerHTML = filtrados.map(p => `
         <div class="autocomplete-item" onclick="selecionarProduto(${p.id})">
-          <strong>${p.nome}</strong> — ${p.quantidade} em estoque — R$ ${p.preco_custo.toFixed(2)} custo
+          <strong>${esc(p.nome)}</strong> — ${p.quantidade} em estoque — R$ ${p.preco_custo.toFixed(2)} custo
         </div>
       `).join('')
       list.style.display = 'block'

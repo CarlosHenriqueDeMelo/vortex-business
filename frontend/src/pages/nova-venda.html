@@ -189,6 +189,9 @@
 </div>
 
 <script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+  const jsArg = s => esc(JSON.stringify(String(s ?? '')))
+
   const API = 'http://127.0.0.1:5000'
   const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
   let clienteSelecionadoId = null
@@ -223,7 +226,7 @@
     if (!filtrados.length) { list.style.display = 'none'; return; }
     list.innerHTML = filtrados.map(c => `
       <div class="autocomplete-item" onclick="selecionarCliente(${c.id})">
-        <strong>${c.nome}</strong> <span style="color:#534AB7">#${c.id}</span> — ${c.cidade || ''}
+        <strong>${esc(c.nome)}</strong> <span style="color:#534AB7">#${c.id}</span> — ${esc(c.cidade || '')}
       </div>
     `).join('')
     list.style.display = 'block'
@@ -258,7 +261,7 @@
     if (!filtrados.length) { list.style.display = 'none'; return; }
     list.innerHTML = filtrados.map(p => `
       <div class="autocomplete-item" onclick="selecionarProduto(${p.id})">
-        <strong>${p.nome}</strong> — R$ ${p.preco_venda.toFixed(2)} <span style="color:#555">(${p.quantidade} em estoque)</span>
+        <strong>${esc(p.nome)}</strong> — R$ ${p.preco_venda.toFixed(2)} <span style="color:#555">(${p.quantidade} em estoque)</span>
       </div>
     `).join('')
     list.style.display = 'block'
@@ -299,7 +302,7 @@
     if (!carrinho.length) { el.innerHTML = '<div class="cart-empty"><i class="ti ti-shopping-cart"></i>Nenhum produto adicionado</div>'; calcTotal(); return; }
     el.innerHTML = carrinho.map(i => `
       <div class="cart-item">
-        <div class="cart-item-name">${i.nome}</div>
+        <div class="cart-item-name">${esc(i.nome)}</div>
         <div class="cart-item-qty">${i.quantidade}x</div>
         <div class="cart-item-price">R$ ${i.subtotal.toFixed(2)}</div>
         <i class="ti ti-trash cart-item-remove" onclick="removerItem(${i.produto_id})"></i>

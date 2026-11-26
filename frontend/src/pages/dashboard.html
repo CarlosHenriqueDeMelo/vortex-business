@@ -346,6 +346,9 @@
 </div>
 
 <script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+  const jsArg = s => esc(JSON.stringify(String(s ?? '')))
+
   if (!localStorage.getItem("empresa")) { window.location.replace("index.html"); }
   const API = 'http://127.0.0.1:5000'
   const empresa = JSON.parse(localStorage.getItem('empresa') || '{}')
@@ -643,34 +646,34 @@
     const tbodyEstoque = document.getElementById('listaEstoque')
     tbodyEstoque.innerHTML = produtosEmpresa.length ? produtosEmpresa.map(p => `
       <tr>
-        <td>${p.nome}</td>
-        <td>${p.categoria || '—'}</td>
+        <td>${esc(p.nome)}</td>
+        <td>${esc(p.categoria || '—')}</td>
         <td>${p.quantidade}</td>
         <td>R$ ${parseFloat(p.preco_venda).toFixed(2)}</td>
         <td><span class="badge ${p.quantidade === 0 ? 'red' : p.quantidade <= p.quantidade_minima ? 'amber' : 'green'}">${p.quantidade === 0 ? 'Zerado' : p.quantidade <= p.quantidade_minima ? 'Baixo' : 'Normal'}</span></td>
-        <td><button class="btn-edit" onclick="abrirModalProduto(${p.id},'${p.nome}','${p.categoria||''}',${p.preco_venda},${p.preco_custo},${p.quantidade_minima})"><i class="ti ti-edit"></i></button><button class="btn-del" onclick="deletarProduto(${p.id}, '${p.nome}')"><i class="ti ti-trash"></i></button></td>
+        <td><button class="btn-edit" onclick="abrirModalProduto(${p.id},${jsArg(p.nome)},${jsArg(p.categoria)},${p.preco_venda},${p.preco_custo},${p.quantidade_minima})"><i class="ti ti-edit"></i></button><button class="btn-del" onclick="deletarProduto(${p.id}, ${jsArg(p.nome)})"><i class="ti ti-trash"></i></button></td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-box"></i>Nenhum produto cadastrado</td></tr>'
 
     const tbodyClientes = document.getElementById('listaClientes')
     tbodyClientes.innerHTML = clientesEmpresa.length ? clientesEmpresa.map(c => `
       <tr>
         <td>#${c.id}</td>
-        <td>${c.nome}</td>
-        <td>${c.cidade || '—'}</td>
-        <td>${c.telefone || '—'}</td>
+        <td>${esc(c.nome)}</td>
+        <td>${esc(c.cidade || '—')}</td>
+        <td>${esc(c.telefone || '—')}</td>
         <td>${c.divida_atual > 0 ? '<span class="badge amber">R$ '+c.divida_atual.toFixed(2)+'</span>' : '—'}</td>
         <td style="display:flex;gap:6px">
           ${c.divida_atual > 0 ? `<button onclick="window.location.href='gerenciar-fiado.html?id=${c.id}&empresa_id=${empresa.id}'" style="background:transparent;border:none;color:#1D9E75;cursor:pointer;font-size:16px" title="Gerenciar fiado"><i class="ti ti-cash"></i></button>` : ''}
           ${c.divida_atual > 0 ? `<button onclick="pdfCliente(${c.id})" style="background:transparent;border:none;color:#534AB7;cursor:pointer;font-size:16px" title="Gerar PDF do fiado"><i class="ti ti-file-text"></i></button>` : ''}
-          <button class="btn-edit" onclick="abrirModalCliente(${c.id},'${c.nome}','${c.telefone||''}','${c.cidade||''}','${c.regiao||''}')"><i class="ti ti-edit"></i></button>
-          <button class="btn-del" onclick="deletarCliente(${c.id}, '${c.nome}')"><i class="ti ti-trash"></i></button>
+          <button class="btn-edit" onclick="abrirModalCliente(${c.id},${jsArg(c.nome)},${jsArg(c.telefone)},${jsArg(c.cidade)},${jsArg(c.regiao)})"><i class="ti ti-edit"></i></button>
+          <button class="btn-del" onclick="deletarCliente(${c.id}, ${jsArg(c.nome)})"><i class="ti ti-trash"></i></button>
         </td>
       </tr>`).join('') : '<tr><td colspan="6" class="empty"><i class="ti ti-users"></i>Nenhum cliente cadastrado</td></tr>'
 
     const tbodyFinanceiro = document.getElementById('listaFinanceiro')
     tbodyFinanceiro.innerHTML = financeiroEmpresa.length ? [...financeiroEmpresa].reverse().map(f => `
       <tr>
-        <td>${f.descricao}</td>
+        <td>${esc(f.descricao)}</td>
         <td>${f.vencimento || '—'}</td>
         <td>R$ ${parseFloat(f.valor).toFixed(2)}</td>
         <td><span class="badge ${f.tipo === 'pagar' ? 'red' : 'green'}">${f.tipo === 'pagar' ? 'Pagar' : 'Receber'}</span></td>
@@ -681,11 +684,11 @@
     const tbodyFornecedores = document.getElementById('listaFornecedores')
     tbodyFornecedores.innerHTML = fornecedoresEmpresa.length ? fornecedoresEmpresa.map(f => `
       <tr>
-        <td>${f.nome}</td>
-        <td>${f.categoria || '—'}</td>
-        <td>${f.telefone || '—'}</td>
+        <td>${esc(f.nome)}</td>
+        <td>${esc(f.categoria || '—')}</td>
+        <td>${esc(f.telefone || '—')}</td>
         <td><span class="badge ${f.ativo ? 'green' : 'amber'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
-        <td><button class="btn-edit" onclick="abrirModalFornecedor(${f.id},'${f.nome}','${f.categoria||''}','${f.telefone||''}')"><i class="ti ti-edit"></i></button><button class="btn-del" onclick="deletarFornecedor(${f.id}, '${f.nome}')"><i class="ti ti-trash"></i></button></td>
+        <td><button class="btn-edit" onclick="abrirModalFornecedor(${f.id},${jsArg(f.nome)},${jsArg(f.categoria)},${jsArg(f.telefone)})"><i class="ti ti-edit"></i></button><button class="btn-del" onclick="deletarFornecedor(${f.id}, ${jsArg(f.nome)})"><i class="ti ti-trash"></i></button></td>
       </tr>`).join('') : '<tr><td colspan="5" class="empty"><i class="ti ti-truck"></i>Nenhum fornecedor cadastrado</td></tr>'
   }
 
@@ -733,10 +736,10 @@
     editandoId = id
     document.getElementById('modalTitulo').innerHTML = '<i class="ti ti-user"></i> Editar Cliente'
     document.getElementById('modalCampos').innerHTML = `
-      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${nome}"/></div>
-      <div class="modal-field"><div class="modal-label">Telefone</div><input class="modal-input" id="edTelefone" value="${telefone || ''}"/></div>
-      <div class="modal-field"><div class="modal-label">Cidade</div><input class="modal-input" id="edCidade" value="${cidade || ''}"/></div>
-      <div class="modal-field"><div class="modal-label">Região</div><input class="modal-input" id="edRegiao" value="${regiao || ''}"/></div>
+      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${esc(nome)}"/></div>
+      <div class="modal-field"><div class="modal-label">Telefone</div><input class="modal-input" id="edTelefone" value="${esc(telefone)}"/></div>
+      <div class="modal-field"><div class="modal-label">Cidade</div><input class="modal-input" id="edCidade" value="${esc(cidade)}"/></div>
+      <div class="modal-field"><div class="modal-label">Região</div><input class="modal-input" id="edRegiao" value="${esc(regiao)}"/></div>
     `
     document.getElementById('modalEditar').classList.add('active')
   }
@@ -746,9 +749,9 @@
     editandoId = id
     document.getElementById('modalTitulo').innerHTML = '<i class="ti ti-truck"></i> Editar Fornecedor'
     document.getElementById('modalCampos').innerHTML = `
-      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${nome}"/></div>
-      <div class="modal-field"><div class="modal-label">Categoria</div><input class="modal-input" id="edCategoria" value="${categoria || ''}"/></div>
-      <div class="modal-field"><div class="modal-label">Telefone</div><input class="modal-input" id="edTelefone" value="${telefone || ''}"/></div>
+      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${esc(nome)}"/></div>
+      <div class="modal-field"><div class="modal-label">Categoria</div><input class="modal-input" id="edCategoria" value="${esc(categoria)}"/></div>
+      <div class="modal-field"><div class="modal-label">Telefone</div><input class="modal-input" id="edTelefone" value="${esc(telefone)}"/></div>
     `
     document.getElementById('modalEditar').classList.add('active')
   }
@@ -758,8 +761,8 @@
     editandoId = id
     document.getElementById('modalTitulo').innerHTML = '<i class="ti ti-box"></i> Editar Produto'
     document.getElementById('modalCampos').innerHTML = `
-      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${nome}"/></div>
-      <div class="modal-field"><div class="modal-label">Categoria</div><input class="modal-input" id="edCategoria" value="${categoria || ''}"/></div>
+      <div class="modal-field"><div class="modal-label">Nome</div><input class="modal-input" id="edNome" value="${esc(nome)}"/></div>
+      <div class="modal-field"><div class="modal-label">Categoria</div><input class="modal-input" id="edCategoria" value="${esc(categoria)}"/></div>
       <div class="modal-field"><div class="modal-label">Preço de venda (R$)</div><input class="modal-input" type="number" step="0.01" id="edPrecoVenda" value="${preco_venda}"/></div>
       <div class="modal-field"><div class="modal-label">Preço de custo (R$)</div><input class="modal-input" type="number" step="0.01" id="edPrecoCusto" value="${preco_custo}"/></div>
       <div class="modal-field"><div class="modal-label">Qtd. mínima</div><input class="modal-input" type="number" id="edQtdMin" value="${quantidade_minima}"/></div>

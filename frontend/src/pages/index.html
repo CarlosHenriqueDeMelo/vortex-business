@@ -96,6 +96,9 @@
   </div>
 
   <script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+  const jsArg = s => esc(JSON.stringify(String(s ?? '')))
+
     const API = 'http://127.0.0.1:5000'
     let empresaSelecionada = null
 
@@ -118,8 +121,8 @@
               : `<div class="initials" style="background:${cor};width:100%;height:100%;">${iniciais}</div>`
             }
           </div>
-          <div class="profile-name">${emp.nome}</div>
-          <div class="tag">${emp.setor || ''}</div>
+          <div class="profile-name">${esc(emp.nome)}</div>
+          <div class="tag">${esc(emp.setor || '')}</div>
         `
         card.onclick = () => selecionarEmpresa(card, emp)
         container.appendChild(card)

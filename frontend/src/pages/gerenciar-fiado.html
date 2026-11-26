@@ -72,6 +72,9 @@
 <div id="fiadosList"></div>
 
 <script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+  const jsArg = s => esc(JSON.stringify(String(s ?? '')))
+
   const API = 'http://127.0.0.1:5000'
   const params = new URLSearchParams(window.location.search)
   const clienteId = params.get('id')
@@ -114,11 +117,11 @@
           <div class="item-check" id="check-${f.id}-${item.id}" onclick="toggleItem(${f.id}, ${item.id}, ${item.subtotal})">
             <i class="ti ti-check" style="font-size:12px;display:none" id="checkicon-${f.id}-${item.id}"></i>
           </div>
-          <div class="item-nome">${item.produto_nome}</div>
+          <div class="item-nome">${esc(item.produto_nome)}</div>
           <div class="item-qtd">x${item.quantidade}</div>
           <div class="item-valor">R$ ${item.subtotal.toFixed(2)}</div>
         </div>
-      `).join('') : `<div class="item-row"><div class="item-nome">${f.descricao}</div><div class="item-valor">R$ ${f.valor.toFixed(2)}</div></div>`
+      `).join('') : `<div class="item-row"><div class="item-nome">${esc(f.descricao)}</div><div class="item-valor">R$ ${f.valor.toFixed(2)}</div></div>`
 
       return `
         <div class="venda-card">
